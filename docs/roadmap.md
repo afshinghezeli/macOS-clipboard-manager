@@ -60,7 +60,7 @@ Spindle records the clipboard reliably and safely, with no UI beyond the menu ba
   - [x] M1.6b Thumbnails: 256 px JPEG via ImageIO without decoding the full image, and TIFF-only copies transcoded to PNG.
   - [x] M1.6c The ingestor: dedup key (same text from another app bumps the existing item), insert or bump in one write transaction, representations inline or in the blob store, source app, and a change stream for the panel.
 - [x] M1.7 `CaptureFilter`: markers, default ignored apps, the bundle-id prefix heuristic, pause and ignore-next-copy state.
-- [ ] M1.8 `PasteboardGateway`: allow-listed reads per item, size caps, PNG over TIFF, stale-read detection, own-write suppression, `accessBehavior` branches. Tested on private pasteboards.
+- [x] M1.8 `PasteboardGateway`: allow-listed reads per item, size caps, PNG over TIFF, stale-read detection, own-write suppression, `accessBehavior` branches. Tested on private pasteboards.
 - [ ] M1.9 `ClipboardMonitor`: 500 ms common-mode timer with tolerance, idle backoff, sleep and wake handling, signposts.
 - [ ] M1.10 Wire capture into the app. The status menu shows the item count and a Pause toggle. Manual test: text, rich text, image, multiple files, 1Password desktop and KeePassXC copies.
 - [ ] M1.11 Retention: limits by count, age and total size, per-kind overrides, pinned items exempt, 500 rows per transaction, blob sweep, scheduled in the background.

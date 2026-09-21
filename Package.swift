@@ -39,6 +39,11 @@ let package = Package(
             swiftSettings: swiftSettings
         ),
         .target(
+            name: "SpindleSystem",
+            dependencies: ["SpindleCore"],
+            swiftSettings: swiftSettings
+        ),
+        .target(
             name: "SpindleUI",
             resources: [.process("Resources")],
             swiftSettings: swiftSettings
@@ -51,6 +56,11 @@ let package = Package(
         .testTarget(
             name: "SpindleStorageTests",
             dependencies: ["SpindleCore", "SpindleStorage"],
+            swiftSettings: swiftSettings
+        ),
+        .testTarget(
+            name: "SpindleSystemTests",
+            dependencies: ["SpindleCore", "SpindleSystem"],
             swiftSettings: swiftSettings
         ),
         .testTarget(
