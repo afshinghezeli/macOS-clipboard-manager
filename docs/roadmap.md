@@ -56,7 +56,7 @@ Spindle records the clipboard reliably and safely, with no UI beyond the menu ba
 - [x] M1.4 `AppDatabase` with migration v1 (schema in [ADR 0003](adr/0003-store-history-in-sqlite-with-grdb.md)), pragmas, and a DEBUG-only erase-on-schema-change.
 - [x] M1.5 `BlobStore`: content-addressed files over 64 KB, atomic writes, crash-safe ordering, orphan sweep.
 - [ ] M1.6 `Ingestor`, in three steps:
-  - [ ] M1.6a Frecency key: a decayed use count stored as one indexable number (half-life 72 hours).
+  - [x] M1.6a Frecency key: a decayed use count stored as one indexable number (half-life 72 hours).
   - [ ] M1.6b Thumbnails: 256 px JPEG via ImageIO without decoding the full image, and TIFF-only copies transcoded to PNG.
   - [ ] M1.6c The ingestor: dedup key (same text from another app bumps the existing item), insert or bump in one write transaction, representations inline or in the blob store, source app, and a change stream for the panel.
 - [ ] M1.7 `CaptureFilter`: markers, default ignored apps, the bundle-id prefix heuristic, pause and ignore-next-copy state.
