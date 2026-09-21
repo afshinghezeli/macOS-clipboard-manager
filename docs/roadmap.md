@@ -70,7 +70,7 @@ Spindle records the clipboard reliably and safely, with no UI beyond the menu ba
 - [x] M2.1 `SearchEngine`, in two steps:
   - [x] M2.1a Ranking: match quality (exact, prefix, word start, inside a word, beyond the indexed head), blended with recency, frecency and pin state; weights in one tested struct.
   - [x] M2.1b The engine: each word of the query must match somewhere; trigram FTS for words of three or more characters, a bounded scan of recent items otherwise; pinned and frecent items always considered; results ranked with M2.1a, at most 100.
-- [ ] M2.2 Frecency key and bumping on copy and paste.
+- [x] M2.2 Frecency key and bumping on copy and paste.
 - [ ] M2.3 Fuzzy fallback over a small in-memory pool when exact matches are scarce.
 - [ ] M2.4 `Benchmarks/` package with deterministic 10k and 100k fixtures, `make bench`, and measured numbers in performance.md.
 - [ ] M2.5 Queries that mix long and short words ("git st") check the short words only among the 256 newest index matches of the long ones, so an older item containing all of them can be missed. Widen the window when too few candidates survive.
