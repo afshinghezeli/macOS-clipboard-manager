@@ -12,6 +12,10 @@ public final class Settings {
     public var openShortcut: KeyboardShortcut {
         didSet { save(openShortcut, as: Key.openShortcut) }
     }
+    /// A global shortcut for "Ignore Next Copy"; none by default.
+    public var ignoreNextCopyShortcut: KeyboardShortcut? {
+        didSet { save(ignoreNextCopyShortcut, as: Key.ignoreNextCopyShortcut) }
+    }
     public var retention: RetentionPolicy {
         didSet { save(retention, as: Key.retention) }
     }
@@ -35,6 +39,7 @@ public final class Settings {
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         openShortcut = Self.load(KeyboardShortcut.self, Key.openShortcut, from: defaults) ?? .openPanelDefault
+        ignoreNextCopyShortcut = Self.load(KeyboardShortcut?.self, Key.ignoreNextCopyShortcut, from: defaults) ?? nil
         retention = Self.load(RetentionPolicy.self, Key.retention, from: defaults) ?? RetentionPolicy()
         ignoredApps =
             Self.load([String].self, Key.ignoredApps, from: defaults).map(Set.init)
@@ -51,6 +56,7 @@ public final class Settings {
 
     private enum Key {
         static let openShortcut = "openShortcut"
+        static let ignoreNextCopyShortcut = "ignoreNextCopyShortcut"
         static let retention = "retention"
         static let ignoredApps = "ignoredApps"
         static let keepsRemoteCopies = "keepsRemoteCopies"

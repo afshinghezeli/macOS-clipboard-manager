@@ -56,14 +56,21 @@ final class CaptureController {
         }
     }
 
-    func togglePause() {
-        if isPaused {
-            pause.resume()
-            logger.notice("Capture resumed")
-        } else {
-            pause.pause(until: nil)
-            logger.notice("Capture paused")
-        }
+    /// When a timed pause ends, if one is running.
+    var pausedUntil: Date? {
+        guard isPaused, let until = pause.pausedUntil, until != .distantFuture else { return nil }
+        return until
+    }
+
+    /// Pauses for `duration`, or until resumed when `nil`.
+    func pause(for duration: TimeInterval?) {
+        pause.pause(until: duration.map { Date.now.addingTimeInterval($0) })
+        logger.notice("Capture paused")
+    }
+
+    func resume() {
+        pause.resume()
+        logger.notice("Capture resumed")
     }
 
     private func handle(_ read: PasteboardRead) {

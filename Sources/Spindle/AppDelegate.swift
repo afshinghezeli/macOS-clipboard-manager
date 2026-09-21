@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var pruner: Pruner?
     private let settings = Settings()
     private var shortcutRegistration: UInt32?
+    private var ignoreShortcutRegistration: UInt32?
     /// The app that was in front when the panel opened; pasting goes there.
     private var pasteTarget: NSRunningApplication?
     private var panelModel = PanelModel()
@@ -66,6 +67,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             state: { [weak self] in
                 StatusMenuState(
                     itemCount: self?.capture?.itemCount, isPaused: self?.capture?.isPaused ?? false,
+                    pausedUntil: self?.capture?.pausedUntil,
                     isSkippingNextCopy: self?.capture?.isSkippingNextCopy ?? false, openShortcut: self?.menuShortcut)
             },
             actions: StatusMenuActions(
@@ -73,7 +75,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     guard let self, self.panel?.didJustHide != true else { return }
                     self.shortcutPressed()
                 },
-                togglePause: { [weak self] in self?.capture?.togglePause() },
+                pause: { [weak self] in self?.capture?.pause(for: $0) },
+                resume: { [weak self] in self?.capture?.resume() },
                 skipNextCopy: { [weak self] in self?.capture?.skipNextCopy() },
                 openSettings: { [weak self] in self?.openSettings() }))
         settingsWindow = SettingsWindowController(
@@ -148,8 +151,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // M4.5 tells the user and offers to pick another one.
             logger.error("Registering the shortcut failed: \(String(describing: error), privacy: .public)")
         }
+        if let ignoreShortcutRegistration { HotKeyCenter.shared.unregister(ignoreShortcutRegistration) }
+        ignoreShortcutRegistration = nil
+        if let shortcut = settings.ignoreNextCopyShortcut {
+            ignoreShortcutRegistration = try? HotKeyCenter.shared.register(shortcut) { [weak self] in
+                self?.capture?.skipNextCopy()
+            }
+        }
         withObservationTracking {
             _ = settings.openShortcut
+            _ = settings.ignoreNextCopyShortcut
         } onChange: { [weak self] in
             Task { @MainActor in self?.registerShortcut() }
         }

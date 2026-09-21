@@ -117,3 +117,21 @@
 
 /* Shortcut recorder: the combination belongs to another app. */
 "Another app already uses %@." = "Another app already uses %@.";
+
+/* Menu bar menu: when a timed pause ends. */
+"Paused until %@" = "Paused until %@";
+
+/* Pause capture choice. */
+"For 5 Minutes" = "For 5 Minutes";
+
+/* Pause capture choice. */
+"For 1 Hour" = "For 1 Hour";
+
+/* Pause capture choice. */
+"Until Resumed" = "Until Resumed";
+
+/* Removes a shortcut. */
+"Clear" = "Clear";
+
+/* Shortcut recorder with no shortcut set. */
+"Record Shortcut" = "Record Shortcut";

@@ -27,6 +27,7 @@ final class SettingsTests {
         #expect(settings.keepsRemoteCopies)
         #expect(!settings.prefersPlainText)
         #expect(!settings.hasCompletedOnboarding)
+        #expect(settings.ignoreNextCopyShortcut == nil)
     }
 
     @Test
@@ -39,6 +40,7 @@ final class SettingsTests {
         settings.keepsRemoteCopies = false
         settings.prefersPlainText = true
         settings.hasCompletedOnboarding = true
+        settings.ignoreNextCopyShortcut = KeyboardShortcut(keyCode: 34, modifiers: [.control, .option, .command])
 
         let reloaded = Settings(defaults: defaults)
         #expect(reloaded.openShortcut == settings.openShortcut)
@@ -47,6 +49,7 @@ final class SettingsTests {
         #expect(!reloaded.keepsRemoteCopies)
         #expect(reloaded.prefersPlainText)
         #expect(reloaded.hasCompletedOnboarding)
+        #expect(reloaded.ignoreNextCopyShortcut == settings.ignoreNextCopyShortcut)
     }
 
     @Test

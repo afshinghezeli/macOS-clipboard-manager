@@ -63,7 +63,17 @@ struct GeneralSettings: View {
                     localized: "Open Spindle", bundle: .spindleUI,
                     comment: "Menu bar menu item; opens the history panel.")
             ) {
-                ShortcutRecorder(shortcut: $settings.openShortcut)
+                ShortcutRecorder(
+                    shortcut: Binding(
+                        get: { settings.openShortcut }, set: { settings.openShortcut = $0 ?? .openPanelDefault }),
+                    defaultShortcut: .openPanelDefault)
+            }
+            LabeledContent(
+                String(
+                    localized: "Ignore Next Copy", bundle: .spindleUI,
+                    comment: "Menu item; the next copy isn't recorded.")
+            ) {
+                ShortcutRecorder(shortcut: $settings.ignoreNextCopyShortcut, defaultShortcut: nil)
             }
             Toggle(
                 String(
