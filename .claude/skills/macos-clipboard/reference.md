@@ -8,7 +8,7 @@ Research snapshot from September 2026 (macOS 27.0 shipping, 27.2 in beta). Re-ch
 |---|---|---|
 | Plain text | `public.utf8-plain-text` | Present on almost every rich copy. Source for search text, titles and the dedup hash. |
 | RTF / RTFD | `public.rtf`, `com.apple.flat-rtfd` | Store bytes. `NSAttributedString(rtf:)` is safe off the main thread. |
-| HTML | `public.html` | Store bytes. Never parse with `documentType: .html` during capture: it synchronises with the main thread and can time out. |
+| HTML | `public.html` | Store bytes. Never parse with `documentType: .html` during capture: it synchronizes with the main thread and can time out. |
 | Images | `public.png`, `public.tiff`, `public.jpeg`, `public.heic` | Prefer PNG > HEIC/JPEG. TIFF is often huge (a 5K screenshot is ~59 MB); convert to PNG off the gateway. Thumbnails via `CGImageSourceCreateThumbnailAtIndex`. When writing back, offer PNG and TIFF. |
 | Files | `public.file-url` | One `NSPasteboardItem` per file. Write back with `writeObjects` using one item per URL. Never read file contents during capture. |
 | PDF | `com.adobe.pdf` | Store bytes, capped. |

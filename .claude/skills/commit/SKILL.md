@@ -36,7 +36,7 @@ Header: `<type>(<scope>)!: <description>`, where the scope and `!` are optional.
 | `fix` | User-visible bug or crash fix | patch bump, "Fixed" |
 | `perf` | Measurable speed or memory improvement | patch bump, "Changed" |
 | `revert` | Reverting an earlier commit | patch bump |
-| `refactor` | Code change with no behaviour change | none |
+| `refactor` | Code change with no behavior change | none |
 | `docs` | README, docs/, code comments | none |
 | `test` | Tests only | none |
 | `build` | Package.swift, Scripts/, bundling, dependencies | none |
@@ -48,7 +48,7 @@ Scopes (optional, closed list): `capture`, `history`, `storage`, `search`, `pane
 
 - Description: imperative mood, lowercase first word, no trailing period. Aim for 50 characters; the hook rejects more than 72.
 - `feat`, `fix` and `perf` descriptions are read by users. They land verbatim in CHANGELOG.md, the GitHub release and the Sparkle update window. Describe the effect: `fix(paste): keep Terminal focused after pasting`, not `fix: fix bug in PasteInjector`.
-- Body (optional): explain why and what behaviour changed, wrapped at 72 columns. Skip it when the header says everything. Don't list files; the diff already does.
+- Body (optional): explain why and what behavior changed, wrapped at 72 columns. Skip it when the header says everything. Don't list files; the diff already does.
 - Breaking changes: add `!` before the colon and a `BREAKING CHANGE: <what users must know>` footer. For an app that means a history store that isn't migrated, a changed default shortcut, a removed feature or a higher minimum macOS.
 - Footers: `Refs: #12`, `Closes #12`. Use `Release-As: x.y.z` only when the owner asks for it.
 - No AI attribution of any kind: no `Co-Authored-By` lines for tools, no "Generated with" lines. `Co-Authored-By` is only for real human co-authors.
