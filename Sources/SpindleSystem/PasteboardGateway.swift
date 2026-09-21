@@ -50,7 +50,7 @@ public final class PasteboardGateway {
     private let pasteboard: NSPasteboard
     private let access: @MainActor (NSPasteboard) -> PasteboardAccess
     private var ownChangeCounts: [Int] = []
-    private let signposter = OSSignposter(subsystem: "com.afshinghezeli.Spindle", category: "Capture")
+    private let signposter = OSSignposter(subsystem: Diagnostics.subsystem, category: "Capture")
 
     /// Largest payload read per flavor; see ``PasteboardFlavor/captureLimit``.
     var sizeLimit: (PasteboardFlavor) -> Int = \.captureLimit

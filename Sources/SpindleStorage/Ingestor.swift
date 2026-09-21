@@ -32,7 +32,7 @@ public actor Ingestor {
     private let blobs: BlobStore
     private let now: @Sendable () -> Date
     private let continuation: AsyncStream<HistoryChange>.Continuation
-    private let signposter = OSSignposter(subsystem: "com.afshinghezeli.Spindle", category: "Ingest")
+    private let signposter = OSSignposter(subsystem: Diagnostics.subsystem, category: "Ingest")
 
     /// Every insert and bump, in the order they were committed.
     public nonisolated let changes: AsyncStream<HistoryChange>

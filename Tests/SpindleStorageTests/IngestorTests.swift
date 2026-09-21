@@ -227,3 +227,23 @@ final class TestClock: @unchecked Sendable {
 
     func advance(by interval: TimeInterval) { now.addTimeInterval(interval) }
 }
+
+@Suite
+struct HistoryStoreTests {
+    @Test
+    func countsItems() async throws {
+        let database = try AppDatabase.inMemory()
+        let blobs = BlobStore(
+            directory: FileManager.default.temporaryDirectory.appending(path: "blobs-\(UUID().uuidString)"))
+        let ingestor = Ingestor(database: database, blobs: blobs)
+        let history = HistoryStore(database: database)
+        #expect(try await history.itemCount() == 0)
+        for text in ["one", "two", "one"] {
+            let item = CapturedItem(representations: [Representation(flavor: .plainText, data: Data(text.utf8))])
+            try await ingestor.ingest(
+                CapturedCopy(
+                    items: [item], declaredTypes: [.plainText], sourceBundleID: nil, changeCount: 1, capturedAt: .now))
+        }
+        #expect(try await history.itemCount() == 2)
+    }
+}

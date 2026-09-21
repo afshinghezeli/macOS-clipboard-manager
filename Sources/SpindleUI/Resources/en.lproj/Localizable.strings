@@ -1,5 +1,14 @@
 /* Accessibility description of the menu bar icon. */
 "Clipboard history" = "Clipboard history";
 
+/* Menu bar menu; no count. */
+"History unavailable" = "History unavailable";
+
+/* Menu item; stops recording copies. */
+"Pause Capture" = "Pause Capture";
+
 /* Menu bar menu item. */
 "Quit Spindle" = "Quit Spindle";
+
+/* Menu item; capture is paused. */
+"Resume Capture" = "Resume Capture";

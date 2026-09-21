@@ -23,7 +23,7 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "Spindle",
-            dependencies: ["SpindleUI"],
+            dependencies: ["SpindleCore", "SpindleStorage", "SpindleSystem", "SpindleUI"],
             swiftSettings: swiftSettings
         ),
         .target(
