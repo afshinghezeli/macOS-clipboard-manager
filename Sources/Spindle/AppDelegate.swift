@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var maintenance: Maintenance?
     private var pasteService: PasteService?
     private var settingsWindow: SettingsWindowController?
+    private var onboarding: OnboardingWindowController?
     private var gateway: PasteboardGateway?
     private var pruner: Pruner?
     private let settings = Settings()
@@ -81,11 +82,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 resume: { [weak self] in self?.capture?.resume() },
                 skipNextCopy: { [weak self] in self?.capture?.skipNextCopy() },
                 openSettings: { [weak self] in self?.openSettings() }))
-        settingsWindow = SettingsWindowController(
-            settings: settings,
-            environment: SettingsEnvironment(
-                pasteboardAccess: { [weak self] in self?.gateway?.currentAccess ?? .allowed },
-                clearHistory: { [weak self] in await self?.clearHistory() }))
+        let environment = SettingsEnvironment(
+            pasteboardAccess: { [weak self] in self?.gateway?.currentAccess ?? .allowed },
+            clearHistory: { [weak self] in await self?.clearHistory() })
+        settingsWindow = SettingsWindowController(settings: settings, environment: environment)
+        if !settings.hasCompletedOnboarding {
+            let onboarding = OnboardingWindowController(settings: settings, environment: environment)
+            onboarding.show()
+            self.onboarding = onboarding
+        }
         // Built now, so the first open is instant.
         let panel = PanelController(rootView: PanelView(model: panelModel))
         panel.onCommand = { [weak self] in self?.panelModel.handle($0) ?? false }

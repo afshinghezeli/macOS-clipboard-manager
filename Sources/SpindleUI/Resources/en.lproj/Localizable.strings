@@ -141,3 +141,33 @@
 
 /* Menu item shown when clipboard access is blocked; opens System Settings. */
 "macOS Is Blocking Clipboard Access…" = "macOS Is Blocking Clipboard Access…";
+
+/* Onboarding title. */
+"Welcome to Spindle" = "Welcome to Spindle";
+
+/* Onboarding subtitle. */
+"Spindle remembers what you copy, so you can find it again and paste it anywhere." = "Spindle remembers what you copy, so you can find it again and paste it anywhere.";
+
+/* Onboarding step. */
+"Open it with a shortcut" = "Open it with a shortcut";
+
+/* Onboarding hint. */
+"You can also click the clipboard icon in the menu bar." = "You can also click the clipboard icon in the menu bar.";
+
+/* Onboarding step. */
+"Let Spindle paste for you" = "Let Spindle paste for you";
+
+/* Onboarding: why the paste permission is needed. */
+"To paste, Spindle presses ⌘V in the app you were using. macOS asks you to allow that under Accessibility. Without it, Spindle copies the item and you press ⌘V yourself." = "To paste, Spindle presses ⌘V in the app you were using. macOS asks you to allow that under Accessibility. Without it, Spindle copies the item and you press ⌘V yourself.";
+
+/* Button: asks macOS for the paste permission. */
+"Allow…" = "Allow…";
+
+/* Onboarding step. */
+"What stays private" = "What stays private";
+
+/* Onboarding: privacy summary. */
+"Your history stays on this Mac. Copies that password managers mark as private are never kept, and neither is anything copied in Passwords, Keychain Access or the apps you add in Settings." = "Your history stays on this Mac. Copies that password managers mark as private are never kept, and neither is anything copied in Passwords, Keychain Access or the apps you add in Settings.";
+
+/* Onboarding: closes the window. */
+"Start Using Spindle" = "Start Using Spindle";

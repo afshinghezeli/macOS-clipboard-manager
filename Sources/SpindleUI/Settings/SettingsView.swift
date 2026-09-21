@@ -319,10 +319,12 @@ struct PrivacySettings: View {
     }
 }
 
-private struct PermissionRow: View {
+struct PermissionRow: View {
     var title: String
     var granted: Bool
     var detail: String
+    var buttonTitle = String(
+        localized: "Open System Settings", bundle: .spindleUI, comment: "Button: opens System Settings.")
     var open: () -> Void
 
     var body: some View {
@@ -335,12 +337,8 @@ private struct PermissionRow: View {
             }
             Spacer()
             if !granted {
-                Button(
-                    String(
-                        localized: "Open System Settings", bundle: .spindleUI, comment: "Button: opens System Settings."
-                    ), action: open
-                )
-                .controlSize(.small)
+                Button(buttonTitle, action: open)
+                    .controlSize(.small)
             }
         }
     }

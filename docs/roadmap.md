@@ -100,7 +100,7 @@ The core loop works end to end: shortcut, type, ↵, pasted.
 - [x] M4.2 Settings window: General, History, Privacy, Advanced.
 - [x] M4.3 Shortcut recorder.
 - [x] M4.4 Launch at login with `SMAppService`, including the "requires approval" state.
-- [ ] M4.5 Onboarding: what Spindle keeps, the paste permission, clipboard access on macOS 15.4+, choosing the shortcut.
+- [x] M4.5 Onboarding: what Spindle keeps, the paste permission, clipboard access on macOS 15.4+, choosing the shortcut.
 - [x] M4.6 Pasteboard access handling: degraded mode when macOS asks or denies, a banner, and deep links to System Settings.
 - [x] M4.7 Pause for a period and ignore the next copy, from the menu and a shortcut.
 - [x] M4.8 Clear history: FTS secure-delete, VACUUM, blob removal, with confirmation.

@@ -23,3 +23,18 @@ struct SettingsSnapshotTests {
             PrivacySettings(settings: settings, pasteboardAccess: { .allowed }), named: "settings-privacy", size: size)
     }
 }
+
+@MainActor
+@Suite
+struct OnboardingSnapshotTests {
+    @Test
+    func welcomeWindow() throws {
+        guard Snapshot.directory != nil else { return }
+        let suite = "spindle-onboarding-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        try Snapshot.write(
+            OnboardingView(settings: Settings(defaults: defaults), pasteboardAccess: { .allowed }, done: {}),
+            named: "onboarding", size: NSSize(width: 540, height: 600))
+    }
+}
