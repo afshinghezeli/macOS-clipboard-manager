@@ -27,7 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let location = try StorageLocation.applicationSupport()
             let database = try AppDatabase.open(at: location)
             let blobs = BlobStore(directory: location.blobsDirectory)
-            let history = HistoryStore(database: database)
+            let history = HistoryStore(database: database, blobs: blobs)
             let capture = CaptureController(ingestor: Ingestor(database: database, blobs: blobs), history: history)
             capture.start(gateway: PasteboardGateway())
             self.capture = capture

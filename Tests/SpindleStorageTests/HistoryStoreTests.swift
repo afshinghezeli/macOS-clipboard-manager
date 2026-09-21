@@ -2,6 +2,7 @@ import Foundation
 import GRDB
 import SpindleCore
 import Testing
+import UniformTypeIdentifiers
 
 @testable import SpindleStorage
 
@@ -17,7 +18,7 @@ struct HistoryStoreTests {
         let blobs = BlobStore(
             directory: FileManager.default.temporaryDirectory.appending(path: "blobs-\(UUID().uuidString)"))
         ingestor = Ingestor(database: database, blobs: blobs, now: { [clock] in clock.now })
-        history = HistoryStore(database: database)
+        history = HistoryStore(database: database, blobs: blobs)
     }
 
     @discardableResult
@@ -130,5 +131,75 @@ struct HistoryStoreTests {
         try await history.setPinned(b, false)
         #expect(try await history.pinned().map(\.preview) == ["a"])
         #expect(try await history.recent().map(\.preview) == ["b"])
+    }
+
+    // MARK: - Contents
+
+    @discardableResult
+    func add(_ items: [[(PasteboardFlavor, Data)]], from app: String? = nil, name: String? = nil) async throws -> Int64
+    {
+        clock.advance(by: 1)
+        let captured = items.map { CapturedItem(representations: $0.map { Representation(flavor: $0.0, data: $0.1) }) }
+        let outcome = try await ingestor.ingest(
+            CapturedCopy(
+                items: captured, declaredTypes: captured.flatMap { $0.representations.map(\.flavor) },
+                sourceBundleID: app, sourceAppName: name, changeCount: 1, capturedAt: clock.now))
+        switch outcome {
+        case .inserted(let id), .bumped(let id): return id
+        case .skipped: throw CancellationError()
+        }
+    }
+
+    @Test
+    func detailsCarryTheTextAndWhereItCameFrom() async throws {
+        let id = try await add(
+            [[(.plainText, Data("hello\nworld".utf8)), (.rtf, Data("{\\rtf1 hello}".utf8))]],
+            from: "com.apple.Notes", name: "Notes")
+        let details = try #require(try await history.details(for: id))
+        #expect(details.text == "hello\nworld")
+        #expect(!details.isTextTruncated)
+        #expect(details.sourceAppName == "Notes")
+        #expect(details.sourceBundleID == "com.apple.Notes")
+        #expect(details.flavors == [.plainText, .rtf])
+        #expect(details.byteSize == 11 + 13)
+    }
+
+    @Test
+    func longTextIsReadFromTheBlobStoreAndShortenedForPreview() async throws {
+        let long = String(repeating: "0123456789", count: 20_000)  // 200 KB, stored as a file
+        let id = try await add([[(.plainText, Data(long.utf8))]])
+        let details = try #require(try await history.details(for: id))
+        #expect(details.isTextTruncated)
+        #expect(details.text?.utf8.count == ItemDetails.textLimit)
+    }
+
+    @Test
+    func detailsListFilesAndImageSizes() async throws {
+        let files = try await add([
+            [(.fileURL, URL(filePath: "/tmp/a.txt").dataRepresentation)],
+            [(.fileURL, URL(filePath: "/tmp/b.txt").dataRepresentation)],
+        ])
+        #expect(try await history.details(for: files)?.fileURLs.map(\.lastPathComponent) == ["a.txt", "b.txt"])
+
+        let png = TestImages.make(width: 320, height: 200, transparent: false, as: .png)
+        let image = try await add([[(.png, png)]])
+        let details = try #require(try await history.details(for: image))
+        #expect(details.imageWidth == 320)
+        #expect(details.imageHeight == 200)
+        #expect(try await history.imageData(for: image) == png)
+        #expect(try await history.imageData(for: files) == nil)
+    }
+
+    @Test
+    func pasteItemsRebuildTheOriginalPasteboardItems() async throws {
+        let id = try await add([
+            [(.fileURL, URL(filePath: "/tmp/a.txt").dataRepresentation), (.plainText, Data("a.txt".utf8))],
+            [(.fileURL, URL(filePath: "/tmp/b.txt").dataRepresentation), (.plainText, Data("b.txt".utf8))],
+        ])
+        let all = try await history.pasteItems(for: id)
+        #expect(all.map { $0.representations.map(\.flavor) } == [[.fileURL, .plainText], [.fileURL, .plainText]])
+        let plain = try await history.pasteItems(for: id, plainTextOnly: true)
+        #expect(plain.map { $0.representations.map(\.flavor) } == [[.plainText], [.plainText]])
+        #expect(try await history.pasteItems(for: 999).isEmpty)
     }
 }

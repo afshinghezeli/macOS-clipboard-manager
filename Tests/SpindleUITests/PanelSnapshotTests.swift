@@ -16,7 +16,7 @@ struct PanelSnapshotTests {
         let blobs = BlobStore(
             directory: FileManager.default.temporaryDirectory.appending(path: "blobs-\(UUID().uuidString)"))
         let ingestor = Ingestor(database: database, blobs: blobs)
-        let history = HistoryStore(database: database)
+        let history = HistoryStore(database: database, blobs: blobs)
 
         func add(_ representations: [(PasteboardFlavor, Data)], items: Int = 1) async throws -> Int64? {
             let item = CapturedItem(representations: representations.map { Representation(flavor: $0.0, data: $0.1) })

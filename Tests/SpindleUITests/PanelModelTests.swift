@@ -18,7 +18,7 @@ struct PanelModelTests {
         let blobs = BlobStore(
             directory: FileManager.default.temporaryDirectory.appending(path: "blobs-\(UUID().uuidString)"))
         ingestor = Ingestor(database: database, blobs: blobs)
-        history = HistoryStore(database: database)
+        history = HistoryStore(database: database, blobs: blobs)
         model = PanelModel(history: history, search: SearchEngine(database: database), pageSize: 30)
     }
 
