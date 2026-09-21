@@ -104,7 +104,7 @@ The core loop works end to end: shortcut, type, ↵, pasted.
 - [x] M4.6 Pasteboard access handling: degraded mode when macOS asks or denies, a banner, and deep links to System Settings.
 - [x] M4.7 Pause for a period and ignore the next copy, from the menu and a shortcut.
 - [x] M4.8 Clear history: FTS secure-delete, VACUUM, blob removal, with confirmation.
-- [ ] M4.9 Import from Maccy through an open panel.
+- [x] M4.9 Import from Maccy through an open panel.
 
 ## M5: First release (0.1.0)
 

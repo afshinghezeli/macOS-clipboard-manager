@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var onboarding: OnboardingWindowController?
     private var gateway: PasteboardGateway?
     private var pruner: Pruner?
+    private var maccyImporter: MaccyImporter?
     private let settings = Settings()
     private var shortcutRegistration: UInt32?
     private var ignoreShortcutRegistration: UInt32?
@@ -38,7 +39,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // One gateway for reading and writing, so a paste from history is recognized as
             // Spindle's own write and not captured again.
             let gateway = PasteboardGateway()
-            let capture = CaptureController(ingestor: Ingestor(database: database, blobs: blobs), history: history)
+            let ingestor = Ingestor(database: database, blobs: blobs)
+            maccyImporter = MaccyImporter(ingestor: ingestor, history: history)
+            let capture = CaptureController(ingestor: ingestor, history: history)
             capture.filter = { [settings] in settings.captureFilter }
             capture.start(gateway: gateway)
             self.capture = capture
@@ -84,7 +87,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 openSettings: { [weak self] in self?.openSettings() }))
         let environment = SettingsEnvironment(
             pasteboardAccess: { [weak self] in self?.gateway?.currentAccess ?? .allowed },
-            clearHistory: { [weak self] in await self?.clearHistory() })
+            clearHistory: { [weak self] in await self?.clearHistory() },
+            importFromMaccy: { [weak self] folder in try await self?.importFromMaccy(folder) ?? 0 })
         settingsWindow = SettingsWindowController(settings: settings, environment: environment)
         if !settings.hasCompletedOnboarding {
             let onboarding = OnboardingWindowController(settings: settings, environment: environment)
@@ -137,6 +141,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         capture?.refreshItemCount()
         await panelModel.reload()
+    }
+
+    private func importFromMaccy(_ folder: URL) async throws -> Int {
+        guard let maccyImporter else { return 0 }
+        let count = try await maccyImporter.importHistory(from: folder, filter: settings.captureFilter)
+        capture?.refreshItemCount()
+        await panelModel.reload()
+        return count
     }
 
     /// Opening Spindle again from Finder or Spotlight shows the panel. macOS 26 can hide menu bar

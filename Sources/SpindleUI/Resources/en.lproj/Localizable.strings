@@ -171,3 +171,21 @@
 
 /* Onboarding: closes the window. */
 "Start Using Spindle" = "Start Using Spindle";
+
+/* Button: brings over Maccy's history. */
+"Import from Maccy…" = "Import from Maccy…";
+
+/* Open panel message for importing from Maccy. */
+"Choose the Maccy folder to import its history." = "Choose the Maccy folder to import its history.";
+
+/* Open panel button for importing from Maccy. */
+"Import" = "Import";
+
+/* Result of importing from Maccy. */
+"Imported %lld items from Maccy." = "Imported %lld items from Maccy.";
+
+/* Importing from Maccy: the chosen folder has no history. */
+"That folder has no Maccy history. It is usually in ~/Library/Containers/org.p0deje.Maccy." = "That folder has no Maccy history. It is usually in ~/Library/Containers/org.p0deje.Maccy.";
+
+/* Importing from Maccy failed; followed by the reason. */
+"The import failed: %@" = "The import failed: %@";

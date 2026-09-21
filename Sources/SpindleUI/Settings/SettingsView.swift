@@ -1,5 +1,7 @@
 import AppKit
+public import Foundation
 import SpindleCore
+import SpindleStorage
 public import SpindleSystem
 import SwiftUI
 import UniformTypeIdentifiers
@@ -8,13 +10,17 @@ import UniformTypeIdentifiers
 public struct SettingsEnvironment {
     public var pasteboardAccess: @MainActor () -> PasteboardAccess
     public var clearHistory: @MainActor () async -> Void
+    /// Imports Maccy's history from the given folder; returns how many items came in.
+    public var importFromMaccy: @MainActor (URL) async throws -> Int
 
     public init(
         pasteboardAccess: @escaping @MainActor () -> PasteboardAccess,
-        clearHistory: @escaping @MainActor () async -> Void
+        clearHistory: @escaping @MainActor () async -> Void,
+        importFromMaccy: @escaping @MainActor (URL) async throws -> Int = { _ in 0 }
     ) {
         self.pasteboardAccess = pasteboardAccess
         self.clearHistory = clearHistory
+        self.importFromMaccy = importFromMaccy
     }
 }
 
@@ -31,12 +37,14 @@ struct SettingsView: View {
                         String(localized: "General", bundle: .spindleUI, comment: "Settings tab."),
                         systemImage: "gearshape")
                 }
-            HistorySettings(settings: settings, clearHistory: environment.clearHistory)
-                .tabItem {
-                    Label(
-                        String(localized: "History", bundle: .spindleUI, comment: "Settings tab."), systemImage: "clock"
-                    )
-                }
+            HistorySettings(
+                settings: settings, clearHistory: environment.clearHistory, importFromMaccy: environment.importFromMaccy
+            )
+            .tabItem {
+                Label(
+                    String(localized: "History", bundle: .spindleUI, comment: "Settings tab."), systemImage: "clock"
+                )
+            }
             PrivacySettings(settings: settings, pasteboardAccess: environment.pasteboardAccess)
                 .tabItem {
                     Label(
@@ -129,6 +137,9 @@ struct GeneralSettings: View {
 struct HistorySettings: View {
     @Bindable var settings: Settings
     var clearHistory: @MainActor () async -> Void
+    var importFromMaccy: @MainActor (URL) async throws -> Int = { _ in 0 }
+    @State private var importResult: String?
+    @State private var isImporting = false
     @State private var confirmingClear = false
     @State private var isClearing = false
 
@@ -176,6 +187,27 @@ struct HistorySettings: View {
             .font(.caption).foregroundStyle(.secondary)
 
             Section {
+                HStack {
+                    Button(
+                        String(
+                            localized: "Import from Maccy…", bundle: .spindleUI,
+                            comment: "Button: brings over Maccy's history.")
+                    ) {
+                        guard let folder = chooseMaccyFolder() else { return }
+                        isImporting = true
+                        Task {
+                            importResult = await runImport(from: folder)
+                            isImporting = false
+                        }
+                    }
+                    .disabled(isImporting)
+                    if let importResult {
+                        Text(verbatim: importResult).font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            Section {
                 Button(
                     String(localized: "Clear History…", bundle: .spindleUI, comment: "Button: deletes the history."),
                     role: .destructive
@@ -204,6 +236,37 @@ struct HistorySettings: View {
             Text(
                 "Everything except pinned items is deleted from this Mac. This can't be undone.", bundle: .spindleUI,
                 comment: "Confirmation message.")
+        }
+    }
+
+    private func chooseMaccyFolder() -> URL? {
+        let panel = NSOpenPanel()
+        panel.message = String(
+            localized: "Choose the Maccy folder to import its history.", bundle: .spindleUI,
+            comment: "Open panel message for importing from Maccy.")
+        panel.prompt = String(
+            localized: "Import", bundle: .spindleUI, comment: "Open panel button for importing from Maccy.")
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.directoryURL = MaccyImporter.defaultFolder
+        return panel.runModal() == .OK ? panel.url : nil
+    }
+
+    private func runImport(from folder: URL) async -> String {
+        do {
+            let count = try await importFromMaccy(folder)
+            return String(
+                localized: "Imported \(count) items from Maccy.", bundle: .spindleUI,
+                comment: "Result of importing from Maccy.")
+        } catch MaccyImporter.ImportError.noHistoryFound {
+            return String(
+                localized: "That folder has no Maccy history. It is usually in ~/Library/Containers/org.p0deje.Maccy.",
+                bundle: .spindleUI,
+                comment: "Importing from Maccy: the chosen folder has no history.")
+        } catch {
+            return String(
+                localized: "The import failed: \(error.localizedDescription)", bundle: .spindleUI,
+                comment: "Importing from Maccy failed; followed by the reason.")
         }
     }
 
