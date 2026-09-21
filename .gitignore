@@ -1,0 +1,29 @@
+.DS_Store
+
+# SwiftPM and Xcode
+.build/
+.swiftpm/
+/Packages/
+xcuserdata/
+DerivedData/
+
+# Build outputs
+/dist/
+*.dSYM
+*.dSYM.zip
+
+# Per-machine settings (see docs/development.md)
+/.local/
+/local.mk
+/.dev-signing-identity
+
+# Signing material never belongs in the repo
+*.p12
+*.p8
+*.cer
+*.mobileprovision
+.env
+
+# Personal Claude Code overrides
+.claude/settings.local.json
+CLAUDE.local.md
