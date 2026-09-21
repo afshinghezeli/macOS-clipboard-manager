@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest an improvement
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check the "Not planned" list in the [roadmap](https://github.com/afshinghezeli/clipboard-manager/blob/main/docs/roadmap.md) first. Spindle deliberately does one job.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do, and what gets in the way today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you'd like to happen
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you do instead today

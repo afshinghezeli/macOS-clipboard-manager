@@ -1,0 +1,53 @@
+name: Bug report
+description: Something doesn't work the way it should
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Spindle version
+      description: Menu bar icon → About Spindle
+      placeholder: 0.1.0 (152)
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      description: Apple menu → About This Mac
+      placeholder: "26.6"
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installed from
+      options:
+        - GitHub release
+        - Homebrew
+        - Built from source
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what happened instead. For paste problems, name the app you were pasting into.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Copy an image in Preview
+        2. Open Spindle and press Return
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (optional)
+      description: |
+        Output of `log show --last 10m --predicate 'subsystem == "com.afshinghezeli.Spindle"'`.
+        Spindle never logs what you copied, but check before posting.
+      render: text
