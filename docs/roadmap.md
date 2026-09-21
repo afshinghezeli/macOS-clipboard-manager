@@ -43,7 +43,7 @@ Repository, tooling and build, before any feature code.
 - [x] M0.8 App bundle: `Scripts/bundle.sh`, the Info.plist template, entitlements, a stable dev signing identity (`make setup-signing`), and `make app`, `run` and `verify-bundle`. Done when the app launches as a menu bar agent with a status item and survives `codesign --verify --strict`.
 - [ ] M0.9 Sandbox spike for [ADR 0002](adr/0002-ship-a-sandboxed-developer-id-app.md): a sandboxed dev build (1) posts ⌘V into TextEdit and (2) updates itself with Sparkle from a local appcast. Accept or supersede the ADR based on the result.
 - [ ] M0.10 CI: build, test and lint on `macos-15` with Xcode 16.4 (same Swift as local), a non-blocking job on the newest Xcode, PR title check, Dependabot, issue forms and PR template. Written and checked locally; tick once the first GitHub run passes.
-- [ ] M0.11 Release plumbing without signing: `version.txt`, release-please config and workflow, build number from commit count.
+- [x] M0.11 Release plumbing without signing: `version.txt`, release-please config and workflow, build number from commit count.
 - [ ] M0.12 Code of conduct (Contributor Covenant 3.0). Needs a reporting contact address from the owner; a placeholder won't do.
 
 ## M1: Capture and storage

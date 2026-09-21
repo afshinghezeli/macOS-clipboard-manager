@@ -53,6 +53,16 @@ Run on a release build before merging a release PR:
 - Pins and settings survive quitting and relaunching.
 - Updating from the previous release through Sparkle keeps the history.
 
+## One-time repository setup
+
+These are GitHub settings, done once by the owner:
+
+- **Settings → General → Pull Requests:** allow squash merging only, with "Default commit message" set to "Pull request title". Turn on "Automatically delete head branches".
+- **Settings → Rules:** a ruleset for `main` that requires a pull request, linear history, and the `ci-ok` and `Conventional PR title` checks, and blocks force pushes and deletion.
+- **Release token:** create a GitHub App with Contents and Pull requests (read and write) on this repository. Store its client ID as the Actions variable `RELEASE_APP_CLIENT_ID` and its private key as the secret `RELEASE_APP_PRIVATE_KEY`. Without it, the release workflow falls back to `GITHUB_TOKEN`. That needs "Allow GitHub Actions to create and approve pull requests" under Settings → Actions, and CI won't run on the release PR.
+- **Settings → Code security:** turn on private vulnerability reporting (SECURITY.md relies on it) and immutable releases.
+- **Settings → Environments:** a `release` environment that holds the signing secrets, limited to tags matching `v*`.
+
 ## Signing secrets
 
 The Developer ID certificate, the App Store Connect API key for notarization and the Sparkle EdDSA private key live only in the `release` environment's secrets on GitHub and in the owner's keychain. They are never committed, and never available to workflows triggered by pull requests from forks.
