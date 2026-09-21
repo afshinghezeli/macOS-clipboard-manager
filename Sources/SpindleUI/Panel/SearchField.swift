@@ -34,8 +34,8 @@ struct SearchField: NSViewRepresentable {
         if field.stringValue != text { field.stringValue = text }
         if context.coordinator.focusToken != focusToken {
             context.coordinator.focusToken = focusToken
-            // After this layout pass, when the field is in its window.
-            DispatchQueue.main.async { field.window?.makeFirstResponder(field) }
+            // After this update, once the field is in its window.
+            Task { @MainActor in field.window?.makeFirstResponder(field) }
         }
     }
 
