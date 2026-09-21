@@ -16,6 +16,10 @@ let package = Package(
     products: [
         .executable(name: "Spindle", targets: ["Spindle"])
     ],
+    dependencies: [
+        // Pinned exactly: upgrades are deliberate, and must keep building with Swift 6.1 (ADR 0003).
+        .package(url: "https://github.com/groue/GRDB.swift", exact: "7.11.1")
+    ],
     targets: [
         .executableTarget(
             name: "Spindle",
@@ -27,6 +31,14 @@ let package = Package(
             swiftSettings: swiftSettings
         ),
         .target(
+            name: "SpindleStorage",
+            dependencies: [
+                "SpindleCore",
+                .product(name: "GRDB", package: "GRDB.swift"),
+            ],
+            swiftSettings: swiftSettings
+        ),
+        .target(
             name: "SpindleUI",
             resources: [.process("Resources")],
             swiftSettings: swiftSettings
@@ -34,6 +46,11 @@ let package = Package(
         .testTarget(
             name: "SpindleCoreTests",
             dependencies: ["SpindleCore"],
+            swiftSettings: swiftSettings
+        ),
+        .testTarget(
+            name: "SpindleStorageTests",
+            dependencies: ["SpindleStorage"],
             swiftSettings: swiftSettings
         ),
         .testTarget(

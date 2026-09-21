@@ -53,7 +53,7 @@ Spindle records the clipboard reliably and safely, with no UI beyond the menu ba
 - [x] M1.1 Core model: `ItemKind`, `CapturedCopy` / `CapturedItem` values, the allow-listed pasteboard types and the privacy markers as data.
 - [x] M1.2 Text folding and preview sanitizing: case, diacritics and width folding; strip U+FFFC and control characters; 300-character previews. Tests cover CJK, emoji and combining marks.
 - [x] M1.3 Content classification from the plain-text flavor: URL, email, color, file path. Cheap, capped at 64 KB, tested.
-- [ ] M1.4 `AppDatabase` with migration v1 (schema in [ADR 0003](adr/0003-store-history-in-sqlite-with-grdb.md)), pragmas, and a DEBUG-only erase-on-schema-change.
+- [x] M1.4 `AppDatabase` with migration v1 (schema in [ADR 0003](adr/0003-store-history-in-sqlite-with-grdb.md)), pragmas, and a DEBUG-only erase-on-schema-change.
 - [ ] M1.5 `BlobStore`: content-addressed files over 64 KB, atomic writes, crash-safe ordering, orphan sweep.
 - [ ] M1.6 `Ingestor`: hashing with volatile types excluded, dedup and bump, representations, thumbnails, one write transaction per copy, `ChangeEvent` stream.
 - [ ] M1.7 `CaptureFilter`: markers, default ignored apps, the bundle-id prefix heuristic, pause and ignore-next-copy state.
