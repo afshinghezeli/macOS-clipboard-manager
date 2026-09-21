@@ -82,7 +82,7 @@ The core loop works end to end: shortcut, type, ↵, pasted.
 - [x] M3.1 Panel window: non-activating `NSPanel`, pre-built for instant show, screen under the mouse, dismiss on click-away and Esc, Edit menu for the search field.
 - [x] M3.2 Global shortcut with a Carbon hotkey wrapper. Choose the default shortcut in an ADR after checking conflicts in Finder, browsers and common editors.
 - [ ] M3.3 History table, in three steps:
-  - [ ] M3.3a Store reads: pinned items in pin order, recent items by keyset paging on `seq`, single summaries and thumbnails.
+  - [x] M3.3a Store reads: pinned items in pin order, recent items by keyset paging on `seq`, single summaries and thumbnails.
   - [ ] M3.3b Panel model: pinned items then recent ones, pages loaded as the selection nears the end, selection kept by item id, new copies appearing at the top while the panel is open.
   - [ ] M3.3c The table: `NSTableView` in an `NSViewRepresentable`, fixed row height, reused cells with kind icons or thumbnails decoded off the main thread into a cache.
 - [ ] M3.4 Search field and keyboard routing: ↑/↓, ⌃N/⌃P, ⌘1–9, Esc clears then closes, pressing the shortcut again moves down.

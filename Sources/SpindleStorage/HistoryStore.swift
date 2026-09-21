@@ -34,4 +34,45 @@ public struct HistoryStore: Sendable {
                 arguments: [seq, milliseconds, Frecency.key(key, usedAgainAt: date), itemID])
         }
     }
+
+    // MARK: - Listing
+
+    /// Pinned items, in the order the user arranged them.
+    public func pinned() async throws -> [ItemSummary] {
+        try await database.writer.read { db in
+            try Row.fetchAll(
+                db, sql: "SELECT \(ItemSummary.columns) FROM item WHERE pinned_rank IS NOT NULL ORDER BY pinned_rank"
+            ).map(ItemSummary.init(row:))
+        }
+    }
+
+    /// Unpinned items, newest first. Pass the last `seq` of one page as `before` to get the next;
+    /// keyset paging costs the same on page 1 and page 1,000.
+    public func recent(before seq: Int64? = nil, limit: Int = 100) async throws -> [ItemSummary] {
+        try await database.writer.read { db in
+            try Row.fetchAll(
+                db,
+                sql: """
+                    SELECT \(ItemSummary.columns) FROM item
+                    WHERE pinned_rank IS NULL AND seq < ?
+                    ORDER BY seq DESC LIMIT ?
+                    """,
+                arguments: [seq ?? Int64.max, limit]
+            ).map(ItemSummary.init(row:))
+        }
+    }
+
+    public func summary(for itemID: Int64) async throws -> ItemSummary? {
+        try await database.writer.read { db in
+            try Row.fetchOne(db, sql: "SELECT \(ItemSummary.columns) FROM item WHERE id = ?", arguments: [itemID])
+                .map(ItemSummary.init(row:))
+        }
+    }
+
+    /// The item's list thumbnail (JPEG or PNG), if it is an image.
+    public func thumbnail(for itemID: Int64) async throws -> Data? {
+        try await database.writer.read { db in
+            try Data.fetchOne(db, sql: "SELECT data FROM thumbnail WHERE item_id = ?", arguments: [itemID])
+        }
+    }
 }
