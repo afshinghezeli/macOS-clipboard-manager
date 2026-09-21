@@ -66,3 +66,21 @@
 
 /* Footer: the Return key copies the item. */
 "Copy to Clipboard" = "Copy to Clipboard";
+
+/* Action: paste without formatting. */
+"Paste as Plain Text" = "Paste as Plain Text";
+
+/* Action: remove from the pinned items. */
+"Unpin" = "Unpin";
+
+/* Action: keep at the top, never removed. */
+"Pin" = "Pin";
+
+/* Action: move a pinned item up. */
+"Move Up" = "Move Up";
+
+/* Action: move a pinned item down. */
+"Move Down" = "Move Down";
+
+/* Action: remove the item from the history. */
+"Delete" = "Delete";

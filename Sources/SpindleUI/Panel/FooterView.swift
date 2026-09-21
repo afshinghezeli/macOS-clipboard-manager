@@ -1,18 +1,30 @@
 import SwiftUI
 
-/// The strip under the list: what ↵ will do, and where to find everything else.
+/// The strip under the list: what ↵ will do, and where to find everything else. Both hints are
+/// also buttons, for people using the mouse.
 struct FooterView: View {
     var targetAppName: String?
     var canPaste: Bool
+    var perform: (PanelCommand) -> Void
 
     var body: some View {
         HStack(spacing: 14) {
             Spacer()
-            hint(primaryAction, keys: "↵")
+            Button {
+                perform(canPaste && targetAppName != nil ? .paste : .copy)
+            } label: {
+                hint(primaryAction, keys: "↵")
+            }
+            .buttonStyle(.plain)
             Divider().frame(height: 14)
-            hint(
-                String(localized: "Actions", bundle: .spindleUI, comment: "Footer: opens the list of actions."),
-                keys: "⌘K")
+            Button {
+                perform(.showActions)
+            } label: {
+                hint(
+                    String(localized: "Actions", bundle: .spindleUI, comment: "Footer: opens the list of actions."),
+                    keys: "⌘K")
+            }
+            .buttonStyle(.plain)
         }
         .font(.system(size: 12))
         .padding(.horizontal, 14)
@@ -39,5 +51,6 @@ struct FooterView: View {
                 .padding(.vertical, 1)
                 .background(RoundedRectangle(cornerRadius: 4).fill(.quaternary))
         }
+        .contentShape(Rectangle())
     }
 }

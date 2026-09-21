@@ -88,7 +88,7 @@ The core loop works end to end: shortcut, type, ↵, pasted.
 - [x] M3.4 Search field and keyboard routing: ↑/↓, ⌃N/⌃P, Page Up/Down, ⌘1–9, Esc clears then closes, pressing the shortcut again closes the panel (as in Spotlight and Raycast).
 - [x] M3.5 Preview pane for text, rich text, images, files, colors and links, with metadata (source app, copied at, times used, size).
 - [x] M3.6 `PasteInjector`: PostEvent check, layout-aware V key, modifier release wait, settle delay. ↵ pastes, ⌘↵ copies, ⇧↵ pastes plain text. The footer says "Paste to <App>".
-- [ ] M3.7 Actions menu (⌘K) listing every action with its shortcut.
+- [x] M3.7 Actions menu (⌘K) listing every action with its shortcut.
 - [x] M3.8 Pins: pin and unpin (⌘.), a pinned section, reordering.
 - [ ] M3.9 Type filter (⌘P): all, text, images, files, links, colors.
 - [ ] M3.10 Status item menu: open, pause, ignore next copy, settings, quit. Reopening the app from Finder opens settings, because macOS 26 can hide menu bar icons.

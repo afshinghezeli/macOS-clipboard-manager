@@ -45,7 +45,7 @@ public struct PanelView: View {
             }
 
             Divider()
-            FooterView(targetAppName: model.targetAppName, canPaste: model.canPaste)
+            FooterView(targetAppName: model.targetAppName, canPaste: model.canPaste) { model.handle($0) }
         }
     }
 }

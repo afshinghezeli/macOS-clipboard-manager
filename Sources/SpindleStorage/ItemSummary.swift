@@ -17,6 +17,22 @@ public struct ItemSummary: Hashable, Sendable, Identifiable {
     public var useCount: Int
     public var isPinned: Bool
 
+    public init(
+        id: Int64, seq: Int64, kind: ItemKind, preview: String, title: String? = nil, sourceAppID: Int64? = nil,
+        createdAt: Date, lastUsedAt: Date, useCount: Int = 1, isPinned: Bool = false
+    ) {
+        self.id = id
+        self.seq = seq
+        self.kind = kind
+        self.preview = preview
+        self.title = title
+        self.sourceAppID = sourceAppID
+        self.createdAt = createdAt
+        self.lastUsedAt = lastUsedAt
+        self.useCount = useCount
+        self.isPinned = isPinned
+    }
+
     static let columns = """
         id, seq, kind, preview, title, source_app_id, created_at, last_used_at, use_count, pinned_rank
         """

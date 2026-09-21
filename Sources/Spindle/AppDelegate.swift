@@ -67,6 +67,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let panel = PanelController(rootView: PanelView(model: panelModel))
         panel.onCommand = { [weak self] in self?.panelModel.handle($0) ?? false }
         panelModel.onClose = { [weak panel] in panel?.hide() }
+        panelModel.onShowActions = { [weak self, weak panel] in
+            guard let self, let item = self.panelModel.selectedItem else { return }
+            let actions = PanelActions.list(
+                for: item, targetAppName: self.panelModel.targetAppName, canPaste: self.panelModel.canPaste)
+            panel?.showActionsMenu(actions) { [weak self] in self?.panelModel.handle($0) }
+        }
         panelModel.onPaste = { [weak self] item, mode in
             guard let self, let pasteService = self.pasteService else { return }
             let target = self.pasteTarget

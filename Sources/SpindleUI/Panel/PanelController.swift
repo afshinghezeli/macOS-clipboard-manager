@@ -35,7 +35,7 @@ public final class PanelController {
 
         window = PanelWindow(contentView: background)
         window.onResignKey = { [weak self] in
-            guard let self, self.window.attachedSheet == nil else { return }
+            guard let self, self.window.attachedSheet == nil, !self.isShowingMenu else { return }
             self.hide()
         }
         window.onCancel = { [weak self] in self?.hide() }
@@ -47,7 +47,30 @@ public final class PanelController {
         }
     }
 
+    private var isShowingMenu = false
+
     public var isVisible: Bool { window.isVisible }
+
+    /// Shows `actions` as a menu at the bottom right of the panel, and performs the chosen one.
+    public func showActionsMenu(_ actions: [PanelAction], perform: @escaping (PanelCommand) -> Void) {
+        guard let contentView = window.contentView else { return }
+        let menu = NSMenu()
+        let handler = MenuHandler(perform: perform)
+        for action in actions {
+            let item = NSMenuItem(
+                title: action.title, action: #selector(MenuHandler.chosen(_:)), keyEquivalent: action.keyEquivalent)
+            item.keyEquivalentModifierMask = action.modifiers
+            item.representedObject = action.command
+            item.target = handler
+            menu.addItem(item)
+        }
+        isShowingMenu = true
+        defer { isShowingMenu = false }
+        let corner = NSPoint(x: contentView.bounds.maxX - 220, y: 44)
+        // Blocks until the menu closes; the handler is retained by the items until then.
+        menu.popUp(positioning: nil, at: corner, in: contentView)
+        withExtendedLifetime(handler) {}
+    }
 
     public func show() {
         window.setFrame(Self.frame(for: window.frame.size, on: Self.screenWithMouse()), display: false)
@@ -80,5 +103,20 @@ public final class PanelController {
         let x = visible.midX - width / 2
         let y = visible.maxY - visible.height * 0.2 - height
         return NSRect(x: x.rounded(), y: max(visible.minY, y).rounded(), width: width, height: height)
+    }
+}
+
+/// Receives the chosen menu item and hands its command back.
+@MainActor
+private final class MenuHandler: NSObject {
+    let perform: (PanelCommand) -> Void
+
+    init(perform: @escaping (PanelCommand) -> Void) {
+        self.perform = perform
+    }
+
+    @objc func chosen(_ item: NSMenuItem) {
+        guard let command = item.representedObject as? PanelCommand else { return }
+        perform(command)
     }
 }
