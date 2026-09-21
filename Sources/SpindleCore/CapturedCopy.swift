@@ -41,6 +41,9 @@ public struct CapturedCopy: Hashable, Sendable {
     /// otherwise the frontmost app when the copy was noticed.
     public var sourceBundleID: String?
 
+    /// The source app's display name at the time of the copy, when known.
+    public var sourceAppName: String?
+
     public var changeCount: Int
     public var capturedAt: Date
 
@@ -48,12 +51,14 @@ public struct CapturedCopy: Hashable, Sendable {
         items: [CapturedItem],
         declaredTypes: [PasteboardFlavor],
         sourceBundleID: String?,
+        sourceAppName: String? = nil,
         changeCount: Int,
         capturedAt: Date
     ) {
         self.items = items
         self.declaredTypes = declaredTypes
         self.sourceBundleID = sourceBundleID
+        self.sourceAppName = sourceAppName
         self.changeCount = changeCount
         self.capturedAt = capturedAt
     }
