@@ -10,7 +10,7 @@ SHELL := /bin/bash
 SWIFT_SOURCES := Package.swift Sources Tests
 STRICT := -Xswiftc -warnings-as-errors
 
-.PHONY: help setup build test lint format check clean
+.PHONY: help setup build test lint format check bench clean
 
 help: ## List the available commands
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  %-14s %s\n", $$1, $$2}'
@@ -33,6 +33,9 @@ format: ## Apply formatting
 check: lint ## Lint, build with warnings as errors, and test (run before every commit)
 	swift build --build-tests $(STRICT)
 	swift test --skip-build
+
+bench: ## Time search, paging and ingest at 10,000 and 100,000 items (release build)
+	swift run -c release SpindleBench
 
 clean: ## Remove build products
 	rm -rf .build dist

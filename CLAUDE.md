@@ -47,9 +47,7 @@ Non-goals (say no, or ask the owner): history sync, AI features, snippet expansi
 | `make release` | Release build in `dist/release/` (universal; `ARCHES=arm64` for a quicker local one) |
 | `make verify-bundle` | Launch the packaged app with the checkout hidden, to catch resource-path bugs |
 | `make logs` | Stream the app's `os_log` output |
-| `make bench` | Performance benchmarks (`Benchmarks/` package) |
-
-`make bench` arrives with roadmap task M2.4.
+| `make bench` | Time search, paging and ingest at 10k and 100k items (release build) |
 
 ## Layout
 

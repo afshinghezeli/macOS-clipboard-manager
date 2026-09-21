@@ -49,6 +49,12 @@ let package = Package(
             resources: [.process("Resources")],
             swiftSettings: swiftSettings
         ),
+        // `make bench`: timings against generated histories (docs/performance.md).
+        .executableTarget(
+            name: "SpindleBench",
+            dependencies: ["SpindleCore", "SpindleStorage"],
+            swiftSettings: swiftSettings
+        ),
         .testTarget(
             name: "SpindleCoreTests",
             dependencies: ["SpindleCore"],

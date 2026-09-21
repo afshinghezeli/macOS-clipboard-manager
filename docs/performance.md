@@ -25,7 +25,7 @@ History size must not change the idle memory figure. Nothing in Spindle loads th
 All of this works with the Command Line Tools; Instruments is optional.
 
 - **Signposts.** Capture, ingest, search, panel open, first frame and thumbnail generation are wrapped in `OSSignposter` intervals. Read them with `/usr/bin/log show --signpost --last 5m --predicate 'subsystem == "com.afshinghezeli.Spindle"'` (use the full path: in zsh, `log` is a shell builtin), or in Instruments' Points of Interest track.
-- **Benchmarks.** `make bench` runs the `Benchmarks/` package (package-benchmark) against generated histories of 10,000 and 100,000 items (roadmap task M2.4).
+- **Benchmarks.** `make bench` builds histories of 10,000 and 100,000 items from a fixed seed and times search, paging and ingest in a release build (`Sources/SpindleBench`).
 - **Memory.** `footprint -p Spindle`, with `--sample 1 --sample-duration 60` for drift.
 - **Idle CPU and wake-ups.** `top -pid $(pgrep -x Spindle) -stats pid,cpu,idlew -l 30`.
 - **Hangs.** `sample Spindle 5`.
@@ -41,7 +41,12 @@ Numbers from the app itself, replacing prototype figures as each part lands. Eac
 | 2026-09-22 | release, arm64, M1.11 | M4, macOS 15.3 | CPU while idle, panel hidden (`top`, 30 × 1 s) | 0.01 % | ≤ 0.1 % |
 | 2026-09-22 | release, arm64, M1.11 | M4, macOS 15.3 | Memory while idle, empty history (`footprint`) | 11 MB | ≤ 40 MB |
 
-The memory figure will be repeated with 100,000 items once the benchmark fixtures exist (M2.4).
+| 2026-09-22 | release, arm64, M2.4 | M4, macOS 15.3 | Search, 10 query types, p99 (`make bench`) | 3.4 ms at 10,000 items, 3.7 ms at 100,000 | ≤ 8 ms / ≤ 25 ms |
+| 2026-09-22 | release, arm64, M2.4 | M4, macOS 15.3 | Slowest query ("a", scans recent items), p99 | 3.9 ms / 4.3 ms | ≤ 8 ms / ≤ 25 ms |
+| 2026-09-22 | release, arm64, M2.4 | M4, macOS 15.3 | A page of 100 items, top or mid-history, p99 | ≤ 1.1 ms | |
+| 2026-09-22 | release, arm64, M2.4 | M4, macOS 15.3 | Ingest one text copy, p50 / p99 | 0.12 ms / 4.5 ms at 100,000 | p99 ≤ 2 ms: **missed** |
+
+The ingest p99 misses its budget: the median is 0.12 ms, but about one copy in a hundred takes several milliseconds. It happens off the main thread, so nobody waits for it; the likely cause is SQLite merging search-index segments or checkpointing the WAL. Roadmap task M2.6 tracks it. The memory figure will be repeated with 100,000 items in the running app.
 
 ## Prototype measurements
 
