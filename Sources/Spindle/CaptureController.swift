@@ -30,14 +30,19 @@ final class CaptureController {
         self.monitor = monitor
         monitor.start()
 
-        Task { [history, weak self] in
-            let count = try? await history.itemCount()
-            self?.itemCount = count
-        }
+        refreshItemCount()
         Task { [ingestor, weak self] in
             for await change in ingestor.changes {
                 if case .inserted = change, let count = self?.itemCount { self?.itemCount = count + 1 }
             }
+        }
+    }
+
+    /// Reloads the count from the database, after something other than capture changed it.
+    func refreshItemCount() {
+        Task { [history, weak self] in
+            let count = try? await history.itemCount()
+            self?.itemCount = count
         }
     }
 

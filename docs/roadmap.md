@@ -63,7 +63,7 @@ Spindle records the clipboard reliably and safely, with no UI beyond the menu ba
 - [x] M1.8 `PasteboardGateway`: allow-listed reads per item, size caps, PNG over TIFF, stale-read detection, own-write suppression, `accessBehavior` branches. Tested on private pasteboards.
 - [x] M1.9 `ClipboardMonitor`: 500 ms common-mode timer with tolerance, idle backoff, sleep and wake handling, signposts.
 - [x] M1.10 Wire capture into the app. The status menu shows the item count and a Pause toggle. Manual test: text, rich text, image, multiple files, 1Password desktop and KeePassXC copies.
-- [ ] M1.11 Retention: limits by count, age and total size, per-kind overrides, pinned items exempt, 500 rows per transaction, blob sweep, scheduled in the background.
+- [x] M1.11 Retention: limits by count, age and total size, per-kind overrides, pinned items exempt, 500 rows per transaction, blob sweep, scheduled in the background.
 
 ## M2: Search
 
