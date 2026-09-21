@@ -80,7 +80,7 @@ Spindle records the clipboard reliably and safely, with no UI beyond the menu ba
 The core loop works end to end: shortcut, type, ↵, pasted.
 
 - [x] M3.1 Panel window: non-activating `NSPanel`, pre-built for instant show, screen under the mouse, dismiss on click-away and Esc, Edit menu for the search field.
-- [ ] M3.2 Global shortcut with a Carbon hotkey wrapper. Choose the default shortcut in an ADR after checking conflicts in Finder, browsers and common editors.
+- [x] M3.2 Global shortcut with a Carbon hotkey wrapper. Choose the default shortcut in an ADR after checking conflicts in Finder, browsers and common editors.
 - [ ] M3.3 History table: `NSTableView` representable, keyset paging, row cache, thumbnail cache, change-event inserts.
 - [ ] M3.4 Search field and keyboard routing: ↑/↓, ⌃N/⌃P, ⌘1–9, Esc clears then closes, pressing the shortcut again moves down.
 - [ ] M3.5 Preview pane for text, rich text, images, files, colors and links, with metadata (source app, copied at, times used, size).

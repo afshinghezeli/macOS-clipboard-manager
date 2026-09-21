@@ -1,14 +1,17 @@
 public import AppKit
 
 /// What the menu bar menu shows. Read each time the menu opens.
-public struct StatusMenuState: Sendable {
+public struct StatusMenuState {
     /// `nil` while the history is loading, or if it couldn't be opened.
     public var itemCount: Int?
     public var isPaused: Bool
+    /// The character and modifiers of the shortcut that opens the panel, shown next to "Open Spindle".
+    public var openShortcut: (key: String, modifiers: NSEvent.ModifierFlags)?
 
-    public init(itemCount: Int?, isPaused: Bool) {
+    public init(itemCount: Int?, isPaused: Bool, openShortcut: (key: String, modifiers: NSEvent.ModifierFlags)? = nil) {
         self.itemCount = itemCount
         self.isPaused = isPaused
+        self.openShortcut = openShortcut
     }
 }
 
@@ -50,6 +53,11 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
             action: #selector(openChosen),
             keyEquivalent: "")
         open.target = self
+        if let shortcut = current.openShortcut {
+            // Shown for reference; the global hotkey does the work.
+            open.keyEquivalent = shortcut.key
+            open.keyEquivalentModifierMask = shortcut.modifiers
+        }
         menu.addItem(open)
         menu.addItem(.separator())
 

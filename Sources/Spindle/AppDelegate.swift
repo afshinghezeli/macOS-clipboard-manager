@@ -11,6 +11,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItemController: StatusItemController?
     private var capture: CaptureController?
     private var maintenance: Maintenance?
+    private var openShortcut = KeyboardShortcut.openPanelDefault
+    /// The app that was in front when the panel opened; pasting goes there.
+    private var pasteTarget: NSRunningApplication?
     private let panelModel = PanelModel()
     private lazy var panel = PanelController(rootView: PanelView(model: panelModel))
 
@@ -43,11 +46,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         statusItemController = StatusItemController(
             state: { [weak self] in
-                StatusMenuState(itemCount: self?.capture?.itemCount, isPaused: self?.capture?.isPaused ?? false)
+                StatusMenuState(
+                    itemCount: self?.capture?.itemCount, isPaused: self?.capture?.isPaused ?? false,
+                    openShortcut: self?.menuShortcut)
             },
             openPanel: { [weak self] in self?.openPanel() },
             togglePause: { [weak self] in self?.capture?.togglePause() })
         _ = panel  // build the panel now, so the first open is instant
+        registerShortcut()
         #if DEBUG
         // `open --env SPINDLE_OPEN_PANEL=1 dist/debug/Spindle.app` opens the panel at launch, for
         // checking it without a shortcut or a click.
@@ -56,9 +62,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         logger.notice("Launched")
     }
 
+    private func registerShortcut() {
+        do {
+            _ = try HotKeyCenter.shared.register(openShortcut) { [weak self] in self?.shortcutPressed() }
+        } catch {
+            // M4.5 tells the user and offers to pick another one.
+            logger.error("Registering the shortcut failed: \(String(describing: error), privacy: .public)")
+        }
+    }
+
+    private func shortcutPressed() {
+        if panel.isVisible {
+            panel.hide()
+        } else {
+            openPanel()
+        }
+    }
+
     private func openPanel() {
+        let frontmost = NSWorkspace.shared.frontmostApplication
+        if frontmost?.processIdentifier != ProcessInfo.processInfo.processIdentifier {
+            pasteTarget = frontmost
+        }
         panelModel.panelWillOpen()
         panel.show()
+    }
+
+    private var menuShortcut: (key: String, modifiers: NSEvent.ModifierFlags)? {
+        guard let key = KeyboardLayout.character(forKeyCode: openShortcut.keyCode) else { return nil }
+        var flags: NSEvent.ModifierFlags = []
+        if openShortcut.modifiers.contains(.control) { flags.insert(.control) }
+        if openShortcut.modifiers.contains(.option) { flags.insert(.option) }
+        if openShortcut.modifiers.contains(.shift) { flags.insert(.shift) }
+        if openShortcut.modifiers.contains(.command) { flags.insert(.command) }
+        return (key, flags)
     }
 
     /// See `Scripts/verify-bundle.sh`.
