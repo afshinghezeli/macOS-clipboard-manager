@@ -27,8 +27,8 @@
       "Bash(plutil *)",
       "Bash(otool *)",
       "Bash(lipo *)",
-      "Bash(log show *)",
-      "Bash(log stream *)",
+      "Bash(/usr/bin/log show *)",
+      "Bash(/usr/bin/log stream *)",
       "Bash(footprint *)"
     ],
     "ask": [

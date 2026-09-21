@@ -35,7 +35,7 @@ description: Spindle's performance budgets and how to measure them with the Comm
 ## Measuring without Xcode
 
 - Signposts: every hot path has an `OSSignposter` interval (`capture`, `ingest`, `search`, `panelOpen`, `firstFrame`, `thumbnail`). Read them with
-  `log show --signpost --last 5m --predicate 'subsystem == "com.afshinghezeli.Spindle.dev"'`.
+  `/usr/bin/log show --signpost --last 5m --predicate 'subsystem == "com.afshinghezeli.Spindle.dev"'`.
 - Benchmarks: `make bench` runs the separate `Benchmarks/` package (package-benchmark 1.34.1) against deterministic 10k and 100k fixtures. Compare with `make bench-compare` before and after a change.
 - Memory: `footprint -p Spindle` for one sample, `footprint -p Spindle --sample 1 --sample-duration 60` for drift, `leaks Spindle` for leaks.
 - Idle CPU and wakeups: `top -pid $(pgrep -x Spindle) -stats pid,cpu,idlew -l 30`.

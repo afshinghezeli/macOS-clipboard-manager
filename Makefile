@@ -54,7 +54,7 @@ stop: ## Quit the running debug app
 	@pkill -f "$(DEBUG_APP)/Contents/MacOS/Spindle" || true
 
 logs: ## Stream the debug app's log messages
-	log stream --style compact --level debug --predicate 'subsystem == "$(DEV_BUNDLE_ID)"'
+	/usr/bin/log stream --style compact --level debug --predicate 'subsystem == "$(DEV_BUNDLE_ID)"'
 
 verify-bundle: ## Check the debug app's signature and resources as another Mac would see them
 	Scripts/verify-bundle.sh "$(DEBUG_APP)"

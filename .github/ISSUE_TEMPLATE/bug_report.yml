@@ -48,6 +48,6 @@ body:
     attributes:
       label: Logs (optional)
       description: |
-        Output of `log show --last 10m --predicate 'subsystem == "com.afshinghezeli.Spindle"'`.
+        Output of `/usr/bin/log show --last 10m --predicate 'subsystem == "com.afshinghezeli.Spindle"'`.
         Spindle never logs what you copied, but check before posting.
       render: text
