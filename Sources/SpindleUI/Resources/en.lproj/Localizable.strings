@@ -7,8 +7,14 @@
 /* Menu item; stops recording copies. */
 "Pause Capture" = "Pause Capture";
 
+/* Menu bar menu item; opens the history panel. */
+"Open Spindle" = "Open Spindle";
+
 /* Menu bar menu item. */
 "Quit Spindle" = "Quit Spindle";
 
 /* Menu item; capture is paused. */
 "Resume Capture" = "Resume Capture";
+
+/* Search field placeholder. */
+"Search clipboard history" = "Search clipboard history";

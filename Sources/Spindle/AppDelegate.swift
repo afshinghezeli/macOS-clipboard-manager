@@ -11,11 +11,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItemController: StatusItemController?
     private var capture: CaptureController?
     private var maintenance: Maintenance?
+    private let panelModel = PanelModel()
+    private lazy var panel = PanelController(rootView: PanelView(model: panelModel))
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if ProcessInfo.processInfo.environment["SPINDLE_SMOKE_TEST"] == "1" {
             runSmokeTest()
         }
+        NSApp.mainMenu = MainMenu.make()
 
         do {
             let location = try StorageLocation.applicationSupport()
@@ -42,8 +45,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             state: { [weak self] in
                 StatusMenuState(itemCount: self?.capture?.itemCount, isPaused: self?.capture?.isPaused ?? false)
             },
+            openPanel: { [weak self] in self?.openPanel() },
             togglePause: { [weak self] in self?.capture?.togglePause() })
+        _ = panel  // build the panel now, so the first open is instant
+        #if DEBUG
+        // `open --env SPINDLE_OPEN_PANEL=1 dist/debug/Spindle.app` opens the panel at launch, for
+        // checking it without a shortcut or a click.
+        if ProcessInfo.processInfo.environment["SPINDLE_OPEN_PANEL"] == "1" { openPanel() }
+        #endif
         logger.notice("Launched")
+    }
+
+    private func openPanel() {
+        panelModel.panelWillOpen()
+        panel.show()
     }
 
     /// See `Scripts/verify-bundle.sh`.

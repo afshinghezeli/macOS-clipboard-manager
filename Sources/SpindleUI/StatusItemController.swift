@@ -17,13 +17,16 @@ public struct StatusMenuState: Sendable {
 public final class StatusItemController: NSObject, NSMenuDelegate {
     private let statusItem: NSStatusItem
     private let state: @MainActor () -> StatusMenuState
+    private let openPanel: @MainActor () -> Void
     private let togglePause: @MainActor () -> Void
 
     public init(
         state: @escaping @MainActor () -> StatusMenuState,
+        openPanel: @escaping @MainActor () -> Void,
         togglePause: @escaping @MainActor () -> Void
     ) {
         self.state = state
+        self.openPanel = openPanel
         self.togglePause = togglePause
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
@@ -40,6 +43,15 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
     public func menuNeedsUpdate(_ menu: NSMenu) {
         let current = state()
         menu.removeAllItems()
+
+        let open = NSMenuItem(
+            title: String(
+                localized: "Open Spindle", bundle: .spindleUI, comment: "Menu bar menu item; opens the history panel."),
+            action: #selector(openChosen),
+            keyEquivalent: "")
+        open.target = self
+        menu.addItem(open)
+        menu.addItem(.separator())
 
         let count = NSMenuItem(title: Self.countTitle(current.itemCount), action: nil, keyEquivalent: "")
         count.isEnabled = false
@@ -59,6 +71,10 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
             withTitle: String(localized: "Quit Spindle", bundle: .spindleUI, comment: "Menu bar menu item."),
             action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q")
+    }
+
+    @objc private func openChosen() {
+        openPanel()
     }
 
     @objc private func pauseChosen() {
