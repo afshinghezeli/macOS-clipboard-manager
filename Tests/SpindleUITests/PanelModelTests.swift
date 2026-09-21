@@ -175,4 +175,16 @@ struct PanelModelTests {
     func nothingToPasteInAnEmptyList() {
         #expect(!model.handle(.paste))
     }
+
+    @Test
+    func selectingAnItemLoadsItsPreview() async throws {
+        let first = try await add("first line\nsecond line")
+        try await add("other")
+        await model.reload()
+        model.select(first)
+        #expect(model.preview == nil)  // never the previous item's contents meanwhile
+        await model.previewTask?.value
+        #expect(model.preview?.summary.id == first)
+        #expect(model.preview?.text == "first line\nsecond line")
+    }
 }

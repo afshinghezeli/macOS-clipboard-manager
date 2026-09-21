@@ -40,7 +40,8 @@ public struct PanelView: View {
 
                 Divider()
 
-                Color.clear.frame(maxWidth: .infinity, maxHeight: .infinity)
+                PreviewView(details: model.preview, image: model.previewImage)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
     }

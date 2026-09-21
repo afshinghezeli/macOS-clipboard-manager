@@ -39,3 +39,21 @@
 
 /* List title of text that is only spaces. */
 "Blank text" = "Blank text";
+
+/* Below a long text in the preview. */
+"Showing the first 100 KB." = "Showing the first 100 KB.";
+
+/* Preview metadata label: the app it was copied from. */
+"Source" = "Source";
+
+/* Preview metadata: source app unknown. */
+"Unknown" = "Unknown";
+
+/* Preview metadata label: when it was copied. */
+"Copied" = "Copied";
+
+/* Preview metadata label: how often it was copied or pasted. */
+"Used" = "Used";
+
+/* Preview metadata label: what the item contains. */
+"Content" = "Content";

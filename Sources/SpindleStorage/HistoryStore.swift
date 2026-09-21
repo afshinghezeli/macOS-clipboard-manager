@@ -154,6 +154,13 @@ public struct HistoryStore: Sendable {
         }
     }
 
+    /// The item's image scaled down for the preview pane, decoded and re-encoded off the main
+    /// thread, so a 5K screenshot never has to be decoded in full for display.
+    public func previewImage(for itemID: Int64, maxPixelSize: Int = 1200) async throws -> Data? {
+        guard let data = try await imageData(for: itemID) else { return nil }
+        return ImageProcessing.thumbnail(of: data, maxPixelSize: maxPixelSize)?.data
+    }
+
     /// The item as pasteboard items, ready to be written back: every format it was copied with, or
     /// only its plain text. Empty when there's nothing to write in that mode.
     public func pasteItems(for itemID: Int64, plainTextOnly: Bool = false) async throws -> [CapturedItem] {

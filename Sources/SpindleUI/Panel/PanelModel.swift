@@ -1,5 +1,6 @@
-import Foundation
+public import AppKit
 public import Observation
+import SpindleCore
 public import SpindleStorage
 
 /// How a chosen item goes back out.
@@ -26,7 +27,15 @@ public final class PanelModel {
     public private(set) var items: [ItemSummary] = []
 
     /// Kept by id rather than position, so it stays on the same item when new copies arrive.
-    public private(set) var selectedID: Int64?
+    public private(set) var selectedID: Int64? {
+        didSet { if selectedID != oldValue { loadPreview() } }
+    }
+
+    /// The selected item in full, once loaded. `nil` while loading, so the preview never shows the
+    /// previous item's contents under the new selection.
+    public private(set) var preview: ItemDetails?
+    /// The selected image, scaled down for the preview pane.
+    public private(set) var previewImage: NSImage?
 
     /// Increases every time the panel opens; views watch it to reset focus and scroll position.
     public private(set) var openCount = 0
@@ -47,6 +56,7 @@ public final class PanelModel {
     @ObservationIgnored private var refresh: Task<Void, Never>?
     @ObservationIgnored private(set) var searchTask: Task<Void, Never>?
     @ObservationIgnored private var lastSearchDuration: Duration = .zero
+    @ObservationIgnored private(set) var previewTask: Task<Void, Never>?
 
     /// - Parameters:
     ///   - history: `nil` gives an empty model, for snapshots and previews.
@@ -158,6 +168,23 @@ public final class PanelModel {
         historyItems.append(contentsOf: page.filter { !known.contains($0.id) })
         hasMorePages = page.count == pageSize
         if !isSearching { items = historyItems }
+    }
+
+    // MARK: - Preview
+
+    private func loadPreview() {
+        previewTask?.cancel()
+        preview = nil
+        previewImage = nil
+        guard let history, let id = selectedID else { return }
+        let isImage = selectedItem?.kind == .image
+        previewTask = Task {
+            let details = try? await history.details(for: id)
+            let imageData = isImage ? try? await history.previewImage(for: id) : nil
+            guard !Task.isCancelled, selectedID == id else { return }
+            preview = details
+            previewImage = imageData.flatMap(NSImage.init(data:))
+        }
     }
 
     // MARK: - Search

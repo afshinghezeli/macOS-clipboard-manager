@@ -66,4 +66,25 @@ struct PanelSnapshotTests {
         try Snapshot.write(PanelView(model: model), named: "panel-history", size: size)
         try Snapshot.write(PanelView(model: model), named: "panel-history-dark", size: size, appearance: .darkAqua)
     }
+
+    @Test
+    func previewOfEachKind() async throws {
+        guard Snapshot.directory != nil else { return }
+        let model = try await sampleModel()
+        let picks: [(String, (ItemSummary) -> Bool)] = [
+            ("text", { $0.preview.hasPrefix("Meeting notes") }),
+            ("image", { $0.kind == .image }),
+            ("color", { $0.kind == .color }),
+            ("file", { $0.kind == .file }),
+        ]
+        for (name, matches) in picks {
+            guard let item = model.items.first(where: matches) else {
+                Issue.record("no \(name) item in the sample history")
+                continue
+            }
+            model.select(item.id)
+            await model.previewTask?.value
+            try Snapshot.write(PanelView(model: model), named: "preview-\(name)", size: size)
+        }
+    }
 }
