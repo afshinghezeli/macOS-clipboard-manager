@@ -79,23 +79,37 @@ public struct HistoryStore: Sendable {
     // MARK: - Listing
 
     /// Pinned items, in the order the user arranged them.
-    public func pinned() async throws -> [ItemSummary] {
-        try await database.writer.read { db in
-            try Row.fetchAll(
-                db, sql: "SELECT \(ItemSummary.columns) FROM item WHERE pinned_rank IS NOT NULL ORDER BY pinned_rank"
-            ).map(ItemSummary.init(row:))
-        }
-    }
-
-    /// Unpinned items, newest first. Pass the last `seq` of one page as `before` to get the next;
-    /// keyset paging costs the same on page 1 and page 1,000.
-    public func recent(before seq: Int64? = nil, limit: Int = 100) async throws -> [ItemSummary] {
+    public func pinned(kinds: Set<ItemKind>? = nil) async throws -> [ItemSummary] {
         try await database.writer.read { db in
             try Row.fetchAll(
                 db,
                 sql: """
                     SELECT \(ItemSummary.columns) FROM item
-                    WHERE pinned_rank IS NULL AND seq < ?
+                    WHERE pinned_rank IS NOT NULL\(Self.kindCondition(kinds)) ORDER BY pinned_rank
+                    """
+            ).map(ItemSummary.init(row:))
+        }
+    }
+
+    /// `AND kind IN (…)` for a kind filter; kinds are integers, so this is safe to inline.
+    private static func kindCondition(_ kinds: Set<ItemKind>?) -> String {
+        guard let kinds else { return "" }
+        return " AND kind IN (\(kinds.map { String($0.rawValue) }.sorted().joined(separator: ",")))"
+    }
+
+    /// Unpinned items, newest first. Pass the last `seq` of one page as `before` to get the next;
+    /// keyset paging costs the same on page 1 and page 1,000.
+    public func recent(
+        before seq: Int64? = nil, limit: Int = 100, kinds: Set<ItemKind>? = nil
+    ) async throws
+        -> [ItemSummary]
+    {
+        try await database.writer.read { db in
+            try Row.fetchAll(
+                db,
+                sql: """
+                    SELECT \(ItemSummary.columns) FROM item
+                    WHERE pinned_rank IS NULL AND seq < ?\(Self.kindCondition(kinds))
                     ORDER BY seq DESC LIMIT ?
                     """,
                 arguments: [seq ?? Int64.max, limit]

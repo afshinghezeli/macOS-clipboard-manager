@@ -1,6 +1,6 @@
 public import AppKit
 public import Observation
-import SpindleCore
+public import SpindleCore
 public import SpindleStorage
 
 /// How a chosen item goes back out.
@@ -20,6 +20,15 @@ public enum PasteMode: Hashable, Sendable {
 public final class PanelModel {
     public var query = "" {
         didSet { if query != oldValue { queryChanged() } }
+    }
+
+    /// Which kinds of items the list shows. Resets to all when the panel opens.
+    public var filter: HistoryFilter = .all {
+        didSet {
+            guard filter != oldValue else { return }
+            Task { await reload() }
+            if isSearching { queryChanged() }
+        }
     }
 
     /// What the list shows: search results while searching, otherwise pinned items followed by the
@@ -91,6 +100,7 @@ public final class PanelModel {
     /// Call right before the panel appears. It shows what it already has immediately and refreshes
     /// in the background, so opening never waits for the database.
     public func panelWillOpen() {
+        filter = .all
         query = ""
         openCount += 1
         selectedID = items.first?.id
@@ -102,8 +112,8 @@ public final class PanelModel {
     public func reload() async {
         guard let history else { return }
         do {
-            let pinned = try await history.pinned()
-            let recent = try await history.recent(limit: pageSize)
+            let pinned = try await history.pinned(kinds: filter.kinds)
+            let recent = try await history.recent(limit: pageSize, kinds: filter.kinds)
             try Task.checkCancellation()
             historyItems = pinned + recent
             pinnedCount = pinned.count
@@ -153,7 +163,7 @@ public final class PanelModel {
             guard selectedItem != nil, let onShowActions else { return false }
             onShowActions()
         case .nextFilter:
-            return false
+            filter = filter.next
         }
         return true
     }
@@ -199,7 +209,9 @@ public final class PanelModel {
         isLoadingPage = true
         defer { isLoadingPage = false }
         let lastSeq = historyItems[pinnedCount...].last?.seq
-        guard let page = try? await history.recent(before: lastSeq, limit: pageSize) else { return }
+        guard let page = try? await history.recent(before: lastSeq, limit: pageSize, kinds: filter.kinds) else {
+            return
+        }
         let known = Set(historyItems.map(\.id))
         historyItems.append(contentsOf: page.filter { !known.contains($0.id) })
         hasMorePages = page.count == pageSize
@@ -235,6 +247,7 @@ public final class PanelModel {
         }
         guard let search else { return }
         let text = query
+        let filter = filter
         let delay: Duration = lastSearchDuration > .milliseconds(16) ? .milliseconds(40) : .zero
         searchTask = Task {
             if delay > .zero { try? await Task.sleep(for: delay) }
@@ -242,7 +255,7 @@ public final class PanelModel {
             let start = ContinuousClock.now
             guard let results = try? await search.search(text), !Task.isCancelled else { return }
             lastSearchDuration = ContinuousClock.now - start
-            items = results.map(\.item)
+            items = results.map(\.item).filter { filter.includes($0.kind) }
             selectedID = items.first?.id
         }
     }

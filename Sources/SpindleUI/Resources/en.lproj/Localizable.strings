@@ -84,3 +84,18 @@
 
 /* Action: remove the item from the history. */
 "Delete" = "Delete";
+
+/* Filter: every kind of item. */
+"All Types" = "All Types";
+
+/* Filter: only images. */
+"Images" = "Images";
+
+/* Filter: only files. */
+"Files" = "Files";
+
+/* Filter: only links. */
+"Links" = "Links";
+
+/* Filter: only colors. */
+"Colors" = "Colors";

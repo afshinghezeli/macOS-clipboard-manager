@@ -12,14 +12,17 @@ public struct PanelView: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            SearchField(
-                text: $model.query,
-                placeholder: String(
-                    localized: "Search clipboard history", bundle: .spindleUI, comment: "Search field placeholder."),
-                focusToken: model.openCount,
-                onCommand: { model.handle($0) }
-            )
-            .frame(height: 26)
+            HStack(spacing: 10) {
+                SearchField(
+                    text: $model.query,
+                    placeholder: String(
+                        localized: "Search clipboard history", bundle: .spindleUI, comment: "Search field placeholder."),
+                    focusToken: model.openCount,
+                    onCommand: { model.handle($0) }
+                )
+                .frame(height: 26)
+                FilterChip(filter: model.filter) { model.handle(.nextFilter) }
+            }
             .padding(.horizontal, 18)
             .padding(.vertical, 12)
 

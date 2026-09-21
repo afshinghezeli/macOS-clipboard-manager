@@ -232,4 +232,33 @@ struct PanelModelTests {
         model.select(model.items.first { !$0.isPinned }?.id)
         #expect(!model.handle(.movePinUp))
     }
+
+    // MARK: - Filter
+
+    private func addColor(_ hex: String) async throws {
+        try await add(hex)  // a hex string is classified as a color
+    }
+
+    @Test
+    func theFilterNarrowsTheHistoryAndTheSearch() async throws {
+        try await add("plain words")
+        try await add("https://swift.org")
+        try await addColor("#FF9500")
+        await model.reload()
+        model.handle(.nextFilter)  // text
+        await model.reload()
+        #expect(model.items.map(\.preview) == ["plain words"])
+        model.filter = .links
+        await model.reload()
+        #expect(model.items.map(\.preview) == ["https://swift.org"])
+        await search("s")
+        #expect(model.items.map(\.preview) == ["https://swift.org"])
+    }
+
+    @Test
+    func openingResetsTheFilter() async throws {
+        model.filter = .images
+        model.panelWillOpen()
+        #expect(model.filter == .all)
+    }
 }
