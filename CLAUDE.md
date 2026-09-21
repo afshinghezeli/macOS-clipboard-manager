@@ -44,6 +44,7 @@ Non-goals (say no, or ask the owner): history sync, AI features, snippet expansi
 | `make lint` / `make format` | `swift format` check / rewrite |
 | `make check` | lint + build with warnings as errors + tests (run before every commit) |
 | `make app` / `make run` | Assemble and sign `dist/debug/Spindle.app` / assemble, then relaunch it with `open` |
+| `make release` | Release build in `dist/release/` (universal; `ARCHES=arm64` for a quicker local one) |
 | `make verify-bundle` | Launch the packaged app with the checkout hidden, to catch resource-path bugs |
 | `make logs` | Stream the app's `os_log` output |
 | `make bench` | Performance benchmarks (`Benchmarks/` package) |

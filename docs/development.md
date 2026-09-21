@@ -27,6 +27,7 @@ Debug builds use the bundle id `com.afshinghezeli.Spindle.dev` and show up as "S
 | `make check` | lint, build with warnings as errors, tests: what CI runs |
 | `make app` | Assemble and sign `dist/debug/Spindle.app` |
 | `make run` | `make app`, quit the running copy, `open` the new one |
+| `make release` | Assemble `dist/release/Spindle.app`; universal unless `ARCHES=arm64` is set |
 | `make logs` | Stream the app's log messages |
 | `make verify-bundle` | Launch the packaged app with the source checkout unreadable, to catch resource lookups that only work on the build machine |
 | `make clean` | Remove `.build` and `dist` |

@@ -42,10 +42,13 @@ clean: ## Remove build products
 DEBUG_APP := dist/debug/Spindle.app
 DEV_BUNDLE_ID := com.afshinghezeli.Spindle.dev
 
-.PHONY: app run stop logs verify-bundle setup-signing reset-permissions
+.PHONY: app release run stop logs verify-bundle setup-signing reset-permissions
 
 app: ## Assemble and sign dist/debug/Spindle.app
 	Scripts/bundle.sh debug
+
+release: ## Assemble dist/release/Spindle.app, universal unless ARCHES is set
+	ARCHES="$${ARCHES:-arm64 x86_64}" Scripts/bundle.sh release
 
 run: stop app ## Rebuild and relaunch the debug app
 	open "$(DEBUG_APP)"
