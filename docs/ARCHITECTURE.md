@@ -109,10 +109,10 @@ Re-copying or pasting an item gives it a new `seq`, which moves it to the top wi
 
 ## Search
 
-Queries are folded (case, diacritics, width) exactly as the stored text was.
+Queries are folded (case, diacritics, width) exactly as the stored text was, then split into words. Every word must occur somewhere in the item, in any order.
 
 - **Three or more characters.** The trigram index is walked newest-first (`ORDER BY rowid DESC LIMIT 256`), which needs no sort because the rowid is the recency key.
-- **Shorter queries.** A bounded scan of the newest 20,000 items is used instead.
+- **Only shorter words.** A bounded scan of the newest 20,000 items is used instead.
 - **Ranking.** Pinned and frequently used items join the candidate set. Everything is re-ranked in Swift by match quality, recency, frecency and pin state.
 - **Fuzzy fallback.** When exact matches are scarce, fuzzy matching runs over a small in-memory pool.
 
