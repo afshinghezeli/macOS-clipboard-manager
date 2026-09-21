@@ -1,4 +1,6 @@
 import AppKit
+import SpindleCore
+import SpindleStorage
 import Testing
 
 @testable import SpindleUI
@@ -6,12 +8,62 @@ import Testing
 @MainActor
 @Suite
 struct PanelSnapshotTests {
+    private let size = NSSize(width: 760, height: 460)
+
+    /// A history like one a person might have after an hour of work.
+    private func sampleModel() async throws -> PanelModel {
+        let database = try AppDatabase.inMemory()
+        let blobs = BlobStore(
+            directory: FileManager.default.temporaryDirectory.appending(path: "blobs-\(UUID().uuidString)"))
+        let ingestor = Ingestor(database: database, blobs: blobs)
+        let history = HistoryStore(database: database)
+
+        func add(_ representations: [(PasteboardFlavor, Data)], items: Int = 1) async throws -> Int64? {
+            let item = CapturedItem(representations: representations.map { Representation(flavor: $0.0, data: $0.1) })
+            let outcome = try await ingestor.ingest(
+                CapturedCopy(
+                    items: Array(repeating: item, count: items), declaredTypes: representations.map(\.0),
+                    sourceBundleID: "com.apple.Safari", changeCount: 1, capturedAt: .now))
+            if case .inserted(let id) = outcome { return id }
+            return nil
+        }
+        func text(_ string: String) -> (PasteboardFlavor, Data) { (.plainText, Data(string.utf8)) }
+
+        let pinned = try await add([text("afshin@example.org")])
+        _ = try await add([text("git rebase -i HEAD~3")])
+        _ = try await add([text("Meeting notes\n- ship 0.1\n- write the README")])
+        _ = try await add([(.fileURL, URL(filePath: "/Users/me/Documents/Budget 2026.numbers").dataRepresentation)])
+        _ = try await add([text("#FF9500")])
+        _ = try await add([(.png, Self.sampleImage())])
+        _ = try await add([text("https://github.com/afshinghezeli/macOS-clipboard-manager")])
+        _ = try await add([text("The quick brown fox jumps over the lazy dog"), (.rtf, Data("{\\rtf1 x}".utf8))])
+        if let pinned { try await history.setPinned(pinned, true) }
+
+        let model = PanelModel(history: history)
+        await model.reload()
+        return model
+    }
+
+    private static func sampleImage() -> Data {
+        let context = CGContext(
+            data: nil, width: 400, height: 300, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)!
+        context.setFillColor(CGColor(red: 0.25, green: 0.5, blue: 0.85, alpha: 1))
+        context.fill(CGRect(x: 0, y: 0, width: 400, height: 300))
+        let bitmap = NSBitmapImageRep(cgImage: context.makeImage()!)
+        return bitmap.representation(using: .png, properties: [:])!
+    }
+
     @Test
     func emptyPanel() throws {
-        let model = PanelModel()
-        try Snapshot.write(PanelView(model: model), named: "panel-empty", size: NSSize(width: 760, height: 460))
-        try Snapshot.write(
-            PanelView(model: model), named: "panel-empty-dark", size: NSSize(width: 760, height: 460),
-            appearance: .darkAqua)
+        try Snapshot.write(PanelView(model: PanelModel()), named: "panel-empty", size: size)
+    }
+
+    @Test
+    func panelWithHistory() async throws {
+        guard Snapshot.directory != nil else { return }
+        let model = try await sampleModel()
+        try Snapshot.write(PanelView(model: model), named: "panel-history", size: size)
+        try Snapshot.write(PanelView(model: model), named: "panel-history-dark", size: size, appearance: .darkAqua)
     }
 }

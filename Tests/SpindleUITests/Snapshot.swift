@@ -25,7 +25,13 @@ enum Snapshot {
         let window = NSWindow(
             contentRect: hosting.frame, styleMask: [.borderless], backing: .buffered, defer: false)
         window.contentView = hosting
-        hosting.layoutSubtreeIfNeeded()
+        // Table views create their rows while displaying, and those rows lay out on the next pass,
+        // so settle a few passes before capturing.
+        for _ in 0..<3 {
+            hosting.layoutSubtreeIfNeeded()
+            hosting.displayIfNeeded()
+            RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        }
         guard let bitmap = hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds) else { return }
         hosting.cacheDisplay(in: hosting.bounds, to: bitmap)
         guard let png = bitmap.representation(using: .png, properties: [:]) else { return }

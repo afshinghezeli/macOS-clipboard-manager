@@ -18,6 +18,9 @@ final class CaptureController {
     /// showing it never touches the database on the main thread.
     private(set) var itemCount: Int?
 
+    /// Called for every item stored or moved to the top, for example to update the open panel.
+    var onChange: (@MainActor (HistoryChange) -> Void)?
+
     init(ingestor: Ingestor, history: HistoryStore) {
         self.ingestor = ingestor
         self.history = history
@@ -34,6 +37,7 @@ final class CaptureController {
         Task { [ingestor, weak self] in
             for await change in ingestor.changes {
                 if case .inserted = change, let count = self?.itemCount { self?.itemCount = count + 1 }
+                self?.onChange?(change)
             }
         }
     }

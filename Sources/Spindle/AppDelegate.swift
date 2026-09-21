@@ -14,8 +14,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var openShortcut = KeyboardShortcut.openPanelDefault
     /// The app that was in front when the panel opened; pasting goes there.
     private var pasteTarget: NSRunningApplication?
-    private let panelModel = PanelModel()
-    private lazy var panel = PanelController(rootView: PanelView(model: panelModel))
+    private var panelModel = PanelModel()
+    private var panel: PanelController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if ProcessInfo.processInfo.environment["SPINDLE_SMOKE_TEST"] == "1" {
@@ -27,10 +27,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let location = try StorageLocation.applicationSupport()
             let database = try AppDatabase.open(at: location)
             let blobs = BlobStore(directory: location.blobsDirectory)
-            let capture = CaptureController(
-                ingestor: Ingestor(database: database, blobs: blobs), history: HistoryStore(database: database))
+            let history = HistoryStore(database: database)
+            let capture = CaptureController(ingestor: Ingestor(database: database, blobs: blobs), history: history)
             capture.start(gateway: PasteboardGateway())
             self.capture = capture
+
+            panelModel = PanelModel(history: history)
+            capture.onChange = { [weak self] change in
+                guard let self, self.panel?.isVisible == true else { return }
+                Task { await self.panelModel.apply(change) }
+            }
 
             // M4.2 makes the policy a setting; until then everything is kept up to 2 GB.
             let maintenance = Maintenance(
@@ -52,7 +58,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             },
             openPanel: { [weak self] in self?.openPanel() },
             togglePause: { [weak self] in self?.capture?.togglePause() })
-        _ = panel  // build the panel now, so the first open is instant
+        // Built now, so the first open is instant.
+        panel = PanelController(rootView: PanelView(model: panelModel))
         registerShortcut()
         #if DEBUG
         // `open --env SPINDLE_OPEN_PANEL=1 dist/debug/Spindle.app` opens the panel at launch, for
@@ -72,8 +79,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func shortcutPressed() {
-        if panel.isVisible {
-            panel.hide()
+        if panel?.isVisible == true {
+            panel?.hide()
         } else {
             openPanel()
         }
@@ -85,7 +92,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             pasteTarget = frontmost
         }
         panelModel.panelWillOpen()
-        panel.show()
+        panel?.show()
     }
 
     private var menuShortcut: (key: String, modifiers: NSEvent.ModifierFlags)? {

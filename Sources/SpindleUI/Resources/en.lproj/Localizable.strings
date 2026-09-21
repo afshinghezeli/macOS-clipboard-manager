@@ -18,3 +18,24 @@
 
 /* Search field placeholder. */
 "Search clipboard history" = "Search clipboard history";
+
+/* Item kind. */
+"Text" = "Text";
+
+/* Item kind. */
+"Formatted text" = "Formatted text";
+
+/* Item kind. */
+"Link" = "Link";
+
+/* List title of a copied image. */
+"Image" = "Image";
+
+/* List title of a copied file. */
+"File" = "File";
+
+/* List title of a copied color. */
+"Color" = "Color";
+
+/* List title of text that is only spaces. */
+"Blank text" = "Blank text";

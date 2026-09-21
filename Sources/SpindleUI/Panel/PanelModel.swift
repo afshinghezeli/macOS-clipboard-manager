@@ -17,7 +17,7 @@ public final class PanelModel {
     /// Increases every time the panel opens; views watch it to reset focus and scroll position.
     public private(set) var openCount = 0
 
-    @ObservationIgnored private let history: HistoryStore?
+    @ObservationIgnored let history: HistoryStore?
     @ObservationIgnored private let pageSize: Int
     @ObservationIgnored private var pinnedCount = 0
     @ObservationIgnored private var hasMorePages = true
