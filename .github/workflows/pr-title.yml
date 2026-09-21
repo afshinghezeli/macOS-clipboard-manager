@@ -1,0 +1,57 @@
+name: PR title
+
+# Pull requests are squash-merged, so the title becomes the commit message on main and, for
+# feat/fix/perf, a line in the changelog.
+on:
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  conventional-title:
+    name: Conventional PR title
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      # No checkout: this runs with the base repository's permissions and never touches PR code.
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            perf
+            refactor
+            docs
+            test
+            build
+            ci
+            style
+            chore
+            revert
+          scopes: |
+            capture
+            history
+            storage
+            search
+            panel
+            paste
+            hotkey
+            privacy
+            settings
+            onboarding
+            menubar
+            updater
+            import
+            l10n
+            a11y
+            deps
+            release
+          requireScope: false
+          subjectPattern: ^(?![A-Z]).+[^.]$
+          subjectPatternError: >-
+            Start the description with a lowercase letter and leave off the trailing period:
+            "{subject}"
