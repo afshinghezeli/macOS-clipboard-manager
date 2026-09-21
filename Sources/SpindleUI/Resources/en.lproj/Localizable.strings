@@ -57,3 +57,12 @@
 
 /* Preview metadata label: what the item contains. */
 "Content" = "Content";
+
+/* Footer: opens the list of actions. */
+"Actions" = "Actions";
+
+/* Footer: the Return key pastes into this app. */
+"Paste to %@" = "Paste to %@";
+
+/* Footer: the Return key copies the item. */
+"Copy to Clipboard" = "Copy to Clipboard";

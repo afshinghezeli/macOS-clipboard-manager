@@ -43,6 +43,9 @@ public struct PanelView: View {
                 PreviewView(details: model.preview, image: model.previewImage)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+
+            Divider()
+            FooterView(targetAppName: model.targetAppName, canPaste: model.canPaste)
         }
     }
 }

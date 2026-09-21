@@ -40,6 +40,7 @@ struct PanelSnapshotTests {
         if let pinned { try await history.setPinned(pinned, true) }
 
         let model = PanelModel(history: history)
+        model.targetAppName = "Safari"
         await model.reload()
         return model
     }

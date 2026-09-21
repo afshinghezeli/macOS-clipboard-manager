@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItemController: StatusItemController?
     private var capture: CaptureController?
     private var maintenance: Maintenance?
+    private var pasteService: PasteService?
     private var openShortcut = KeyboardShortcut.openPanelDefault
     /// The app that was in front when the panel opened; pasting goes there.
     private var pasteTarget: NSRunningApplication?
@@ -28,9 +29,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let database = try AppDatabase.open(at: location)
             let blobs = BlobStore(directory: location.blobsDirectory)
             let history = HistoryStore(database: database, blobs: blobs)
+            // One gateway for reading and writing, so a paste from history is recognized as
+            // Spindle's own write and not captured again.
+            let gateway = PasteboardGateway()
             let capture = CaptureController(ingestor: Ingestor(database: database, blobs: blobs), history: history)
-            capture.start(gateway: PasteboardGateway())
+            capture.start(gateway: gateway)
             self.capture = capture
+            pasteService = PasteService(history: history, gateway: gateway)
 
             panelModel = PanelModel(history: history, search: SearchEngine(database: database))
             capture.onChange = { [weak self] change in
@@ -62,6 +67,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let panel = PanelController(rootView: PanelView(model: panelModel))
         panel.onCommand = { [weak self] in self?.panelModel.handle($0) ?? false }
         panelModel.onClose = { [weak panel] in panel?.hide() }
+        panelModel.onPaste = { [weak self] item, mode in
+            guard let self, let pasteService = self.pasteService else { return }
+            let target = self.pasteTarget
+            Task { await pasteService.perform(item, mode: mode, into: target, hidePanel: { panel.hide() }) }
+        }
         self.panel = panel
         registerShortcut()
         #if DEBUG
@@ -94,6 +104,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if frontmost?.processIdentifier != ProcessInfo.processInfo.processIdentifier {
             pasteTarget = frontmost
         }
+        panelModel.targetAppName = pasteTarget?.localizedName
+        panelModel.canPaste = PasteInjector.isPermitted
         panelModel.panelWillOpen()
         panel?.show()
     }

@@ -40,6 +40,11 @@ public final class PanelModel {
     /// Increases every time the panel opens; views watch it to reset focus and scroll position.
     public private(set) var openCount = 0
 
+    /// The app that was in front when the panel opened, where ↵ pastes.
+    public var targetAppName: String?
+    /// Whether macOS allows Spindle to paste for the user; without it ↵ only copies.
+    public var canPaste = true
+
     /// Called with the chosen item. The app writes it to the clipboard and, unless copying,
     /// pastes it into the app that was in front.
     @ObservationIgnored public var onPaste: ((ItemSummary, PasteMode) -> Void)?
