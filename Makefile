@@ -36,3 +36,31 @@ check: lint ## Lint, build with warnings as errors, and test (run before every c
 
 clean: ## Remove build products
 	rm -rf .build dist
+
+# ------------------------------------------------------------------------------ the app
+
+DEBUG_APP := dist/debug/Spindle.app
+DEV_BUNDLE_ID := com.afshinghezeli.Spindle.dev
+
+.PHONY: app run stop logs verify-bundle setup-signing reset-permissions
+
+app: ## Assemble and sign dist/debug/Spindle.app
+	Scripts/bundle.sh debug
+
+run: stop app ## Rebuild and relaunch the debug app
+	open "$(DEBUG_APP)"
+
+stop: ## Quit the running debug app
+	@pkill -f "$(DEBUG_APP)/Contents/MacOS/Spindle" || true
+
+logs: ## Stream the debug app's log messages
+	log stream --style compact --level debug --predicate 'subsystem == "$(DEV_BUNDLE_ID)"'
+
+verify-bundle: ## Check the debug app's signature and resources as another Mac would see them
+	Scripts/verify-bundle.sh "$(DEBUG_APP)"
+
+setup-signing: ## One-time: create the local signing identity so permissions survive rebuilds
+	Scripts/setup-dev-signing.sh
+
+reset-permissions: ## Forget the privacy permissions granted to the debug app
+	tccutil reset All $(DEV_BUNDLE_ID)
