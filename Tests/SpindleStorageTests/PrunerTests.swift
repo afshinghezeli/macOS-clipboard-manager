@@ -113,4 +113,13 @@ struct PrunerTests {
         #expect(result.removedFiles == 1)
         #expect(throws: (any Error).self) { try blobs.read(hash) }
     }
+
+    @Test
+    func clearingKeepsOnlyPinnedItems() async throws {
+        try seed(1_200)
+        try pinOldest(3)
+        let removed = try await pruner.clearHistory()
+        #expect(removed == 1_197)
+        #expect(try remaining() == [1, 2, 3])
+    }
 }

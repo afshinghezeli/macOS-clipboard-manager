@@ -63,6 +63,17 @@ public struct Pruner: Sendable {
         return result
     }
 
+    /// Deletes every unpinned item and its payload files, then compacts the database so the
+    /// deleted text doesn't linger in free pages. Returns how many items were removed.
+    @discardableResult
+    public func clearHistory() async throws -> Int {
+        let removed = try await deleteInBatches(where: "1")
+        // A short grace period still protects a copy being stored right now.
+        _ = try await sweepFiles(olderThan: .now.addingTimeInterval(-60))
+        try await database.writer.vacuum()
+        return removed
+    }
+
     /// Deletes unpinned items matching `condition`, oldest first, one batch per transaction.
     private func deleteInBatches(where condition: String) async throws -> Int {
         var total = 0
