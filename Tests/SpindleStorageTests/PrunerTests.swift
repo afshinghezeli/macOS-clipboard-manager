@@ -98,7 +98,7 @@ struct PrunerTests {
 
     @Test
     func deletesPayloadFilesOfRemovedItems() async throws {
-        let ingestor = Ingestor(database: database, blobs: blobs, now: { [now] in now })
+        let ingestor = Ingestor(database: database, blobs: blobs)
         let big = CapturedItem(representations: [Representation(flavor: .plainText, data: Data(count: 100_000))])
         try await ingestor.ingest(
             CapturedCopy(

@@ -1,4 +1,4 @@
-public import Foundation
+import Foundation
 import GRDB
 public import SpindleCore
 import os
@@ -30,17 +30,15 @@ public enum IngestOutcome: Hashable, Sendable {
 public actor Ingestor {
     private let database: AppDatabase
     private let blobs: BlobStore
-    private let now: @Sendable () -> Date
     private let continuation: AsyncStream<HistoryChange>.Continuation
     private let signposter = OSSignposter(subsystem: Diagnostics.subsystem, category: "Ingest")
 
     /// Every insert and bump, in the order they were committed.
     public nonisolated let changes: AsyncStream<HistoryChange>
 
-    public init(database: AppDatabase, blobs: BlobStore, now: @escaping @Sendable () -> Date = { .now }) {
+    public init(database: AppDatabase, blobs: BlobStore) {
         self.database = database
         self.blobs = blobs
-        self.now = now
         (changes, continuation) = AsyncStream.makeStream(of: HistoryChange.self, bufferingPolicy: .bufferingNewest(64))
     }
 
@@ -64,7 +62,8 @@ public actor Ingestor {
             blobHashes[position] = try blobs.write(representation.data)
         }
 
-        let date = now()
+        // The copy's own time: now for live capture, the original time for imported history.
+        let date = copy.capturedAt
         let metadata = try String(decoding: JSONEncoder.sorted.encode(prepared.metadata), as: UTF8.self)
         let record = SaveRequest(prepared: prepared, blobHashes: blobHashes, metadata: metadata, copy: copy, date: date)
         let outcome = try await database.writer.write { db in

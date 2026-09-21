@@ -17,7 +17,7 @@ struct IngestorTests {
         database = try AppDatabase.inMemory()
         blobs = BlobStore(
             directory: FileManager.default.temporaryDirectory.appending(path: "blobs-\(UUID().uuidString)"))
-        ingestor = Ingestor(database: database, blobs: blobs, now: { [clock] in clock.now })
+        ingestor = Ingestor(database: database, blobs: blobs)
     }
 
     // MARK: - Fixtures

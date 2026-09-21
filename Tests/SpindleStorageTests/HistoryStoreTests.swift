@@ -17,7 +17,7 @@ struct HistoryStoreTests {
         database = try AppDatabase.inMemory()
         let blobs = BlobStore(
             directory: FileManager.default.temporaryDirectory.appending(path: "blobs-\(UUID().uuidString)"))
-        ingestor = Ingestor(database: database, blobs: blobs, now: { [clock] in clock.now })
+        ingestor = Ingestor(database: database, blobs: blobs)
         history = HistoryStore(database: database, blobs: blobs)
     }
 
