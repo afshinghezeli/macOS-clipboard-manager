@@ -100,7 +100,7 @@ Tables ([ADR 0003](adr/0003-store-history-in-sqlite-with-grdb.md)):
 | Table | Holds |
 |---|---|
 | `item` | One small row per clip: `seq` (recency key), content hash, kind, preview, folded search text, sizes, timestamps, use count, frecency key, pin rank, source app |
-| `representation` | One row per pasteboard type of a clip, in original order; inline bytes up to 64 KB, else a blob hash |
+| `representation` | One row per flavor of each pasteboard item in a clip (a multi-file copy has several items), in original order; inline bytes up to 64 KB, else a blob hash |
 | `thumbnail` | A 256 px JPEG for image items |
 | `source_app` | Bundle id and name, normalized |
 | `item_fts` | FTS5 trigram index over `search_text`, with `rowid = seq` |
