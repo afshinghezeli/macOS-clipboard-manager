@@ -1,14 +1,28 @@
+import Foundation
 public import Observation
 public import SpindleStorage
+
+/// How a chosen item goes back out.
+public enum PasteMode: Hashable, Sendable {
+    /// Paste into the app that was in front, with every format the item has.
+    case paste
+    /// Paste only the plain text.
+    case pasteAsPlainText
+    /// Put it on the clipboard and paste nothing.
+    case copy
+}
 
 /// Everything the panel shows and does, independent of its views, so it can be tested without a
 /// window.
 @MainActor
 @Observable
 public final class PanelModel {
-    public var query = ""
+    public var query = "" {
+        didSet { if query != oldValue { queryChanged() } }
+    }
 
-    /// Pinned items first, then the rest of the history, newest first.
+    /// What the list shows: search results while searching, otherwise pinned items followed by the
+    /// rest of the history, newest first.
     public private(set) var items: [ItemSummary] = []
 
     /// Kept by id rather than position, so it stays on the same item when new copies arrive.
@@ -17,17 +31,34 @@ public final class PanelModel {
     /// Increases every time the panel opens; views watch it to reset focus and scroll position.
     public private(set) var openCount = 0
 
+    /// Called with the chosen item. The app writes it to the clipboard and, unless copying,
+    /// pastes it into the app that was in front.
+    @ObservationIgnored public var onPaste: ((ItemSummary, PasteMode) -> Void)?
+    /// Called when the panel should close.
+    @ObservationIgnored public var onClose: (() -> Void)?
+
     @ObservationIgnored let history: HistoryStore?
+    @ObservationIgnored private let search: SearchEngine?
     @ObservationIgnored private let pageSize: Int
+    @ObservationIgnored private var historyItems: [ItemSummary] = []
     @ObservationIgnored private var pinnedCount = 0
     @ObservationIgnored private var hasMorePages = true
     @ObservationIgnored private var isLoadingPage = false
     @ObservationIgnored private var refresh: Task<Void, Never>?
+    @ObservationIgnored private(set) var searchTask: Task<Void, Never>?
+    @ObservationIgnored private var lastSearchDuration: Duration = .zero
 
-    /// - Parameter history: `nil` gives an empty model, for snapshots and previews.
-    public init(history: HistoryStore? = nil, pageSize: Int = 100) {
+    /// - Parameters:
+    ///   - history: `nil` gives an empty model, for snapshots and previews.
+    ///   - search: `nil` disables searching.
+    public init(history: HistoryStore? = nil, search: SearchEngine? = nil, pageSize: Int = 100) {
         self.history = history
+        self.search = search
         self.pageSize = pageSize
+    }
+
+    public var isSearching: Bool {
+        !query.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     public var selectedIndex: Int? {
@@ -49,20 +80,54 @@ public final class PanelModel {
         refresh = Task { await reload() }
     }
 
-    /// Replaces the list with pinned items and the first page of history, and selects the first.
+    /// Replaces the history with pinned items and the first page, and selects the first item.
     public func reload() async {
         guard let history else { return }
         do {
             let pinned = try await history.pinned()
             let recent = try await history.recent(limit: pageSize)
             try Task.checkCancellation()
-            items = pinned + recent
+            historyItems = pinned + recent
             pinnedCount = pinned.count
             hasMorePages = recent.count == pageSize
-            selectedID = items.first?.id
+            if !isSearching { showHistory() }
         } catch {
             // A failed refresh keeps the previous list; the next open tries again.
         }
+    }
+
+    private func showHistory() {
+        items = historyItems
+        selectedID = items.first?.id
+    }
+
+    // MARK: - Commands
+
+    /// Performs a keyboard command. Returns `false` when it doesn't apply, so the key can go
+    /// elsewhere.
+    @discardableResult
+    public func handle(_ command: PanelCommand) -> Bool {
+        switch command {
+        case .moveUp: moveSelection(by: -1)
+        case .moveDown: moveSelection(by: 1)
+        case .pageUp: moveSelection(by: -8)
+        case .pageDown: moveSelection(by: 8)
+        case .paste: return choose(selectedItem, .paste)
+        case .pasteAsPlainText: return choose(selectedItem, .pasteAsPlainText)
+        case .copy: return choose(selectedItem, .copy)
+        case .quickPaste(let index): return choose(items.indices.contains(index) ? items[index] : nil, .paste)
+        case .escape:
+            if query.isEmpty { onClose?() } else { query = "" }
+        case .showActions, .togglePin, .delete, .nextFilter:
+            return false
+        }
+        return true
+    }
+
+    private func choose(_ item: ItemSummary?, _ mode: PasteMode) -> Bool {
+        guard let item else { return false }
+        onPaste?(item, mode)
+        return true
     }
 
     // MARK: - Selection
@@ -80,18 +145,43 @@ public final class PanelModel {
         select(items[target].id)
     }
 
-    /// Loads the next page once the selection comes within a few rows of the end of the list.
+    /// Loads the next page once the selection comes within a few rows of the end of the history.
     func loadMoreIfNeeded() async {
-        guard let history, hasMorePages, !isLoadingPage, let index = selectedIndex, index >= items.count - 20 else {
-            return
-        }
+        guard let history, !isSearching, hasMorePages, !isLoadingPage, let index = selectedIndex,
+            index >= items.count - 20
+        else { return }
         isLoadingPage = true
         defer { isLoadingPage = false }
-        let lastSeq = items[pinnedCount...].last?.seq
+        let lastSeq = historyItems[pinnedCount...].last?.seq
         guard let page = try? await history.recent(before: lastSeq, limit: pageSize) else { return }
-        let known = Set(items.map(\.id))
-        items.append(contentsOf: page.filter { !known.contains($0.id) })
+        let known = Set(historyItems.map(\.id))
+        historyItems.append(contentsOf: page.filter { !known.contains($0.id) })
         hasMorePages = page.count == pageSize
+        if !isSearching { items = historyItems }
+    }
+
+    // MARK: - Search
+
+    /// Each keystroke cancels the search before it: the latest query always wins. A short pause is
+    /// added only when the previous search was slow, so typing never queues work.
+    private func queryChanged() {
+        searchTask?.cancel()
+        guard isSearching else {
+            showHistory()
+            return
+        }
+        guard let search else { return }
+        let text = query
+        let delay: Duration = lastSearchDuration > .milliseconds(16) ? .milliseconds(40) : .zero
+        searchTask = Task {
+            if delay > .zero { try? await Task.sleep(for: delay) }
+            guard !Task.isCancelled else { return }
+            let start = ContinuousClock.now
+            guard let results = try? await search.search(text), !Task.isCancelled else { return }
+            lastSearchDuration = ContinuousClock.now - start
+            items = results.map(\.item)
+            selectedID = items.first?.id
+        }
     }
 
     // MARK: - Live changes
@@ -105,15 +195,26 @@ public final class PanelModel {
         case .inserted(let itemID), .bumped(let itemID): id = itemID
         }
         guard let summary = try? await history.summary(for: id) else { return }
-        if let existing = items.firstIndex(where: { $0.id == id }) {
-            if summary.isPinned {
-                items[existing] = summary
+        if let existing = historyItems.firstIndex(where: { $0.id == id }) {
+            if summary.isPinned && existing < pinnedCount {
+                // Pinned items keep the place the user gave them.
+                historyItems[existing] = summary
+                publishHistory()
                 return
             }
-            items.remove(at: existing)
+            historyItems.remove(at: existing)
             if existing < pinnedCount { pinnedCount -= 1 }
         }
-        guard !summary.isPinned else { return }
-        items.insert(summary, at: pinnedCount)
+        historyItems.insert(summary, at: pinnedCount)
+        if summary.isPinned { pinnedCount += 1 }
+        publishHistory()
+    }
+
+    private func publishHistory() {
+        if !isSearching {
+            let selected = selectedID
+            items = historyItems
+            selectedID = selected ?? items.first?.id
+        }
     }
 }

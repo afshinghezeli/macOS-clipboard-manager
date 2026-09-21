@@ -4,7 +4,6 @@ public import SwiftUI
 public struct PanelView: View {
     @Bindable private var model: PanelModel
     @State private var thumbnails: ThumbnailCache
-    @FocusState private var searchFocused: Bool
 
     public init(model: PanelModel) {
         self.model = model
@@ -13,15 +12,16 @@ public struct PanelView: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            TextField(
-                String(localized: "Search clipboard history", bundle: .spindleUI, comment: "Search field placeholder."),
-                text: $model.query
+            SearchField(
+                text: $model.query,
+                placeholder: String(
+                    localized: "Search clipboard history", bundle: .spindleUI, comment: "Search field placeholder."),
+                focusToken: model.openCount,
+                onCommand: { model.handle($0) }
             )
-            .textFieldStyle(.plain)
-            .font(.system(size: 20))
+            .frame(height: 26)
             .padding(.horizontal, 18)
-            .padding(.vertical, 14)
-            .focused($searchFocused)
+            .padding(.vertical, 12)
 
             Divider()
 
@@ -31,7 +31,10 @@ public struct PanelView: View {
                     selectedID: model.selectedID,
                     thumbnails: thumbnails,
                     onSelect: { model.select($0) },
-                    onActivate: { _ in }
+                    onActivate: { id in
+                        model.select(id)
+                        model.handle(.paste)
+                    }
                 )
                 .frame(width: 320)
 
@@ -40,6 +43,5 @@ public struct PanelView: View {
                 Color.clear.frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .onChange(of: model.openCount, initial: true) { searchFocused = true }
     }
 }

@@ -85,7 +85,7 @@ The core loop works end to end: shortcut, type, ↵, pasted.
   - [x] M3.3a Store reads: pinned items in pin order, recent items by keyset paging on `seq`, single summaries and thumbnails.
   - [x] M3.3b Panel model: pinned items then recent ones, pages loaded as the selection nears the end, selection kept by item id, new copies appearing at the top while the panel is open.
   - [x] M3.3c The table: `NSTableView` in an `NSViewRepresentable`, fixed row height, reused cells with kind icons or thumbnails decoded off the main thread into a cache.
-- [ ] M3.4 Search field and keyboard routing: ↑/↓, ⌃N/⌃P, ⌘1–9, Esc clears then closes, pressing the shortcut again moves down.
+- [x] M3.4 Search field and keyboard routing: ↑/↓, ⌃N/⌃P, Page Up/Down, ⌘1–9, Esc clears then closes, pressing the shortcut again closes the panel (as in Spotlight and Raycast).
 - [ ] M3.5 Preview pane for text, rich text, images, files, colors and links, with metadata (source app, copied at, times used, size).
 - [ ] M3.6 `PasteInjector`: PostEvent check, layout-aware V key, modifier release wait, settle delay. ↵ pastes, ⌘↵ copies, ⇧↵ pastes plain text. The footer says "Paste to <App>".
 - [ ] M3.7 Actions menu (⌘K) listing every action with its shortcut.

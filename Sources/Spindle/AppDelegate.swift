@@ -32,7 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             capture.start(gateway: PasteboardGateway())
             self.capture = capture
 
-            panelModel = PanelModel(history: history)
+            panelModel = PanelModel(history: history, search: SearchEngine(database: database))
             capture.onChange = { [weak self] change in
                 guard let self, self.panel?.isVisible == true else { return }
                 Task { await self.panelModel.apply(change) }
@@ -59,7 +59,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             openPanel: { [weak self] in self?.openPanel() },
             togglePause: { [weak self] in self?.capture?.togglePause() })
         // Built now, so the first open is instant.
-        panel = PanelController(rootView: PanelView(model: panelModel))
+        let panel = PanelController(rootView: PanelView(model: panelModel))
+        panel.onCommand = { [weak self] in self?.panelModel.handle($0) ?? false }
+        panelModel.onClose = { [weak panel] in panel?.hide() }
+        self.panel = panel
         registerShortcut()
         #if DEBUG
         // `open --env SPINDLE_OPEN_PANEL=1 dist/debug/Spindle.app` opens the panel at launch, for

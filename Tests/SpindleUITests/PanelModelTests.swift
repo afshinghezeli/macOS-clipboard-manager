@@ -19,7 +19,7 @@ struct PanelModelTests {
             directory: FileManager.default.temporaryDirectory.appending(path: "blobs-\(UUID().uuidString)"))
         ingestor = Ingestor(database: database, blobs: blobs)
         history = HistoryStore(database: database)
-        model = PanelModel(history: history, pageSize: 30)
+        model = PanelModel(history: history, search: SearchEngine(database: database), pageSize: 30)
     }
 
     @discardableResult
@@ -104,5 +104,75 @@ struct PanelModelTests {
         model.panelWillOpen()
         #expect(model.query.isEmpty)
         #expect(model.items.map(\.preview) == ["kept"])
+    }
+
+    // MARK: - Search and commands
+
+    private func search(_ text: String) async {
+        model.query = text
+        await model.searchTask?.value
+    }
+
+    @Test
+    func typingSearchesAndClearingShowsTheHistoryAgain() async throws {
+        for text in ["git status", "invoice 2026", "git log"] { try await add(text) }
+        await model.reload()
+        await search("git")
+        #expect(Set(model.items.map(\.preview)) == ["git status", "git log"])
+        #expect(model.selectedIndex == 0)
+        await search("")
+        #expect(model.items.count == 3)
+    }
+
+    @Test
+    func theLatestQueryWins() async throws {
+        for text in ["alpha", "beta"] { try await add(text) }
+        await model.reload()
+        model.query = "alp"
+        model.query = "bet"
+        await model.searchTask?.value
+        #expect(model.items.map(\.preview) == ["beta"])
+    }
+
+    @Test
+    func escapeClearsTheSearchThenCloses() async throws {
+        var closed = false
+        model.onClose = { closed = true }
+        model.query = "something"
+        model.handle(.escape)
+        #expect(model.query.isEmpty)
+        #expect(!closed)
+        model.handle(.escape)
+        #expect(closed)
+    }
+
+    @Test
+    func returnPastesTheSelectionInTheChosenMode() async throws {
+        for text in ["first", "second"] { try await add(text) }
+        await model.reload()
+        var chosen: [(String, PasteMode)] = []
+        model.onPaste = { chosen.append(($0.preview, $1)) }
+        model.handle(.moveDown)
+        model.handle(.paste)
+        model.handle(.pasteAsPlainText)
+        model.handle(.copy)
+        #expect(chosen.map(\.0) == ["first", "first", "first"])
+        #expect(chosen.map(\.1) == [.paste, .pasteAsPlainText, .copy])
+    }
+
+    @Test
+    func numberShortcutsPasteByPosition() async throws {
+        for text in ["one", "two", "three"] { try await add(text) }
+        await model.reload()
+        var pasted: [String] = []
+        model.onPaste = { item, _ in pasted.append(item.preview) }
+        #expect(model.handle(.quickPaste(2)))
+        #expect(!model.handle(.quickPaste(7)))
+        #expect(pasted == ["one"])
+    }
+
+    @Test
+    func nothingToPasteInAnEmptyList() {
+        #expect(!model.handle(.paste))
     }
 }

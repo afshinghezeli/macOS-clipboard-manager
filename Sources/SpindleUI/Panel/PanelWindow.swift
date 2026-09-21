@@ -13,6 +13,8 @@ final class PanelWindow: NSPanel {
     var onResignKey: (() -> Void)?
     /// Called for Esc when nothing inside the panel handled it.
     var onCancel: (() -> Void)?
+    /// Offered every ⌘ shortcut before the main menu sees it. Returns whether it was used.
+    var onKeyEquivalent: ((NSEvent) -> Bool)?
 
     init(contentView: NSView) {
         super.init(
@@ -46,6 +48,11 @@ final class PanelWindow: NSPanel {
     override func resignKey() {
         super.resignKey()
         onResignKey?()
+    }
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if onKeyEquivalent?(event) == true { return true }
+        return super.performKeyEquivalent(with: event)
     }
 
     override func cancelOperation(_ sender: Any?) {

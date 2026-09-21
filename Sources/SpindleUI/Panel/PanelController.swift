@@ -11,6 +11,9 @@ public final class PanelController {
     /// Called after the panel hides, however that happened.
     public var onHide: (() -> Void)?
 
+    /// Handles ⌘ shortcuts pressed in the panel; see ``PanelKeyMap``.
+    public var onCommand: ((PanelCommand) -> Bool)?
+
     public init(rootView: some View) {
         let background = NSVisualEffectView()
         background.material = .popover
@@ -36,6 +39,12 @@ public final class PanelController {
             self.hide()
         }
         window.onCancel = { [weak self] in self?.hide() }
+        window.onKeyEquivalent = { [weak self] event in
+            guard let characters = event.charactersIgnoringModifiers,
+                let command = PanelKeyMap.command(forKeyEquivalent: characters, modifiers: event.modifierFlags)
+            else { return false }
+            return self?.onCommand?(command) ?? false
+        }
     }
 
     public var isVisible: Bool { window.isVisible }
