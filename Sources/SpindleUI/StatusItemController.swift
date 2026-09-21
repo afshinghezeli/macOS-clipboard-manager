@@ -1,4 +1,5 @@
 public import AppKit
+import SpindleSystem
 
 /// What the menu bar menu shows. Read each time the menu opens.
 public struct StatusMenuState {
@@ -8,6 +9,8 @@ public struct StatusMenuState {
     /// When a timed pause ends; `nil` when not paused or paused until resumed.
     public var pausedUntil: Date?
     public var isSkippingNextCopy: Bool
+    /// macOS currently won't let Spindle read the clipboard.
+    public var isClipboardBlocked = false
     /// The character and modifiers of the shortcut that opens the panel, shown next to "Open Spindle".
     public var openShortcut: (key: String, modifiers: NSEvent.ModifierFlags)?
 
@@ -105,6 +108,15 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
         let count = NSMenuItem(title: Self.countTitle(current.itemCount), action: nil, keyEquivalent: "")
         count.isEnabled = false
         menu.addItem(count)
+        if current.isClipboardBlocked {
+            let blocked = item(
+                String(
+                    localized: "macOS Is Blocking Clipboard Access…", bundle: .spindleUI,
+                    comment: "Menu item shown when clipboard access is blocked; opens System Settings."),
+                #selector(blockedChosen))
+            blocked.image = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: nil)
+            menu.addItem(blocked)
+        }
         if current.isPaused {
             menu.addItem(
                 item(
@@ -163,6 +175,7 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
     }
 
     @objc private func openChosen() { actions.togglePanel() }
+    @objc private func blockedChosen() { SystemSettingsPane.pasteboard.open() }
     @objc private func pauseChosen(_ sender: NSMenuItem) {
         actions.pause(sender.representedObject as? TimeInterval)
     }

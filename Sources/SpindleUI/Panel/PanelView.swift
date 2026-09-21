@@ -26,6 +26,10 @@ public struct PanelView: View {
             .padding(.horizontal, 18)
             .padding(.vertical, 12)
 
+            if model.clipboardAccessProblem != nil {
+                AccessBanner()
+            }
+
             Divider()
 
             HStack(spacing: 0) {

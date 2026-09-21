@@ -2,6 +2,7 @@ public import AppKit
 public import Observation
 public import SpindleCore
 public import SpindleStorage
+public import SpindleSystem
 
 /// How a chosen item goes back out.
 public enum PasteMode: Hashable, Sendable {
@@ -53,6 +54,8 @@ public final class PanelModel {
     public var targetAppName: String?
     /// Whether macOS allows Spindle to paste for the user; without it ↵ only copies.
     public var canPaste = true
+    /// Set when macOS won't let Spindle read the clipboard, so new copies aren't being recorded.
+    public var clipboardAccessProblem: PasteboardAccess?
 
     /// Called with the chosen item. The app writes it to the clipboard and, unless copying,
     /// pastes it into the app that was in front.

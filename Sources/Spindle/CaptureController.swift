@@ -19,6 +19,9 @@ final class CaptureController {
     /// showing it never touches the database on the main thread.
     private(set) var itemCount: Int?
 
+    /// Set while macOS refuses to let Spindle read the clipboard; cleared by the next copy it can read.
+    private(set) var restriction: PasteboardAccess?
+
     /// Called for every item stored or moved to the top, for example to update the open panel.
     var onChange: (@MainActor (HistoryChange) -> Void)?
 
@@ -76,6 +79,7 @@ final class CaptureController {
     private func handle(_ read: PasteboardRead) {
         switch read {
         case .copy(let copy):
+            restriction = nil
             if let reason = pause.admit(at: copy.capturedAt) ?? filter().skipReason(for: copy) {
                 logger.debug("Skipped a copy: \(String(describing: reason), privacy: .public)")
                 return
@@ -93,7 +97,7 @@ final class CaptureController {
         case .marked:
             logger.debug("Skipped a copy marked private by its source")
         case .restricted(let access):
-            // M4.6 turns this into a banner with a link to System Settings.
+            restriction = access
             logger.notice("macOS restricts clipboard access: \(String(describing: access), privacy: .public)")
         case .ownWrite, .nothingToKeep, .changedDuringRead:
             break

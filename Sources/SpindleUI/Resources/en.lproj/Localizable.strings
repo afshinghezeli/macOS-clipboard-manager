@@ -135,3 +135,9 @@
 
 /* Shortcut recorder with no shortcut set. */
 "Record Shortcut" = "Record Shortcut";
+
+/* Panel banner when clipboard access is denied or set to ask. */
+"macOS is blocking clipboard access, so new copies aren't being recorded." = "macOS is blocking clipboard access, so new copies aren't being recorded.";
+
+/* Menu item shown when clipboard access is blocked; opens System Settings. */
+"macOS Is Blocking Clipboard Access…" = "macOS Is Blocking Clipboard Access…";

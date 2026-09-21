@@ -101,7 +101,7 @@ The core loop works end to end: shortcut, type, ↵, pasted.
 - [x] M4.3 Shortcut recorder.
 - [x] M4.4 Launch at login with `SMAppService`, including the "requires approval" state.
 - [ ] M4.5 Onboarding: what Spindle keeps, the paste permission, clipboard access on macOS 15.4+, choosing the shortcut.
-- [ ] M4.6 Pasteboard access handling: degraded mode when macOS asks or denies, a banner, and deep links to System Settings.
+- [x] M4.6 Pasteboard access handling: degraded mode when macOS asks or denies, a banner, and deep links to System Settings.
 - [x] M4.7 Pause for a period and ignore the next copy, from the menu and a shortcut.
 - [x] M4.8 Clear history: FTS secure-delete, VACUUM, blob removal, with confirmation.
 - [ ] M4.9 Import from Maccy through an open panel.
@@ -121,7 +121,7 @@ The core loop works end to end: shortcut, type, ↵, pasted.
 
 Rough order; each becomes a milestone with tasks when it is next.
 
-- **0.2** Text in images: on-device OCR with Vision, searchable, and "copy text from image".
+- **0.2** Text in images: on-device OCR with Vision, searchable, and "copy text from image". When macOS asks before every clipboard read, record placeholders ("Link copied") through its no-alert detection APIs; needs testing on macOS 15.4 or later.
 - **0.3** Multi-select and paste stack: paste several items joined or one after another; a collect mode.
 - **0.4** Paste as (rich, plain, HTML, RTF), Quick Look, drag out of the panel, save image, open link, reveal file, filter by source app and date.
 - **0.5** Secret-aware handling: detect API keys, tokens and card numbers, mask their previews and expire them. Optional hide-from-screen-sharing. Revisit encryption at rest.

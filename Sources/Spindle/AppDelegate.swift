@@ -65,10 +65,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         statusItemController = StatusItemController(
             state: { [weak self] in
-                StatusMenuState(
+                var state = StatusMenuState(
                     itemCount: self?.capture?.itemCount, isPaused: self?.capture?.isPaused ?? false,
                     pausedUntil: self?.capture?.pausedUntil,
                     isSkippingNextCopy: self?.capture?.isSkippingNextCopy ?? false, openShortcut: self?.menuShortcut)
+                state.isClipboardBlocked = self?.capture?.restriction != nil
+                return state
             },
             actions: StatusMenuActions(
                 togglePanel: { [weak self] in
@@ -181,6 +183,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         panelModel.targetAppName = pasteTarget?.localizedName
         panelModel.canPaste = PasteInjector.isPermitted
+        let access = gateway?.currentAccess ?? .allowed
+        panelModel.clipboardAccessProblem = access == .allowed ? nil : access
         panelModel.panelWillOpen()
         panel?.show()
     }

@@ -1,6 +1,7 @@
 import AppKit
 import SpindleCore
 import SpindleStorage
+import SpindleSystem
 import Testing
 
 @testable import SpindleUI
@@ -87,5 +88,13 @@ struct PanelSnapshotTests {
             await model.previewTask?.value
             try Snapshot.write(PanelView(model: model), named: "preview-\(name)", size: size)
         }
+    }
+
+    @Test
+    func blockedClipboardBanner() async throws {
+        guard Snapshot.directory != nil else { return }
+        let model = try await sampleModel()
+        model.clipboardAccessProblem = .denied
+        try Snapshot.write(PanelView(model: model), named: "panel-blocked", size: size)
     }
 }
