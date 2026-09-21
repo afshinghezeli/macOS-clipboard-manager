@@ -2,7 +2,8 @@ public import Foundation
 
 /// How much history to keep. Pinned items are never removed by any of these limits.
 ///
-/// The default keeps everything until the history's payloads reach 2 GB, then drops the oldest
+/// The default keeps everything until the history's payloads reach 2 GB (decimal, as Finder counts),
+/// then drops the oldest
 /// items. There is no item cap and no age limit unless the user sets one.
 public struct RetentionPolicy: Hashable, Sendable, Codable {
     /// Keep at most this many unpinned items. `nil` means no limit.
@@ -17,7 +18,7 @@ public struct RetentionPolicy: Hashable, Sendable, Codable {
     public init(
         maxItems: Int? = nil,
         maxAge: TimeInterval? = nil,
-        maxTotalBytes: Int? = 2 << 30,
+        maxTotalBytes: Int? = 2_000_000_000,
         maxAgeByKind: [ItemKind: TimeInterval] = [:]
     ) {
         self.maxItems = maxItems
