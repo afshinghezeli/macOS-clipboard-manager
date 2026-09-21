@@ -1,0 +1,40 @@
+#!/bin/sh
+# Rejects commit messages that don't follow Conventional Commits 1.0.
+# Enable once per clone with `make setup` (or `git config core.hooksPath .githooks`).
+# The rules are explained in CONTRIBUTING.md.
+
+msg_file="$1"
+subject=$(sed -n '/^[^#]/{p;q;}' "$msg_file")
+
+case "$subject" in
+    Merge\ * | Revert\ \"* | fixup!\ * | squash!\ * | amend!\ *) exit 0 ;;
+esac
+
+types='feat|fix|perf|refactor|docs|test|build|ci|chore|style|revert'
+
+if ! printf '%s\n' "$subject" | grep -Eq "^($types)(\([a-z0-9][a-z0-9-]*\))?!?: [a-z0-9\`](.*[^.])?$"; then
+    cat >&2 <<MSG
+commit-msg: subject is not a Conventional Commit:
+
+    $subject
+
+Expected <type>(<scope>)!: <description>, for example
+    fix(paste): keep Terminal focused after pasting
+
+Types: $(printf '%s' "$types" | tr '|' ' ')
+The description starts lowercase and has no trailing period.
+MSG
+    exit 1
+fi
+
+length=$(printf '%s' "$subject" | wc -m | tr -d ' ')
+if [ "$length" -gt 72 ]; then
+    echo "commit-msg: subject is $length characters; the limit is 72 (aim for 50)." >&2
+    exit 1
+fi
+
+second_line=$(sed -n '2p' "$msg_file")
+if [ -n "$second_line" ] && [ "${second_line#\#}" = "$second_line" ]; then
+    echo "commit-msg: leave a blank line between the subject and the body." >&2
+    exit 1
+fi
