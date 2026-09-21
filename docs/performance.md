@@ -38,8 +38,10 @@ Numbers from the app itself, replacing prototype figures as each part lands. Eac
 
 | Date | Build | Mac | Metric | Result | Budget |
 |---|---|---|---|---|---|
-| 2026-09-22 | debug, M1.10 | M4, macOS 15.3 | CPU while idle, panel hidden (`top`, 20 × 1 s) | 0.02 % | ≤ 0.1 % |
-| 2026-09-22 | debug, M1.10 | M4, macOS 15.3 | Memory after a few captures (`footprint`) | 13 MB, peak 16 MB | ≤ 40 MB |
+| 2026-09-22 | release, arm64, M1.11 | M4, macOS 15.3 | CPU while idle, panel hidden (`top`, 30 × 1 s) | 0.01 % | ≤ 0.1 % |
+| 2026-09-22 | release, arm64, M1.11 | M4, macOS 15.3 | Memory while idle, empty history (`footprint`) | 11 MB | ≤ 40 MB |
+
+The memory figure will be repeated with 100,000 items once the benchmark fixtures exist (M2.4).
 
 ## Prototype measurements
 
