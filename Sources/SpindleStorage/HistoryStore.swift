@@ -35,6 +35,22 @@ public struct HistoryStore: Sendable {
         }
     }
 
+    /// Pins the item at the end of the pinned list, or unpins it. Pinned items are never pruned.
+    public func setPinned(_ itemID: Int64, _ pinned: Bool) async throws {
+        try await database.writer.write { db in
+            if pinned {
+                try db.execute(
+                    sql: """
+                        UPDATE item SET pinned_rank = (SELECT coalesce(max(pinned_rank), 0) + 1 FROM item)
+                        WHERE id = ? AND pinned_rank IS NULL
+                        """,
+                    arguments: [itemID])
+            } else {
+                try db.execute(sql: "UPDATE item SET pinned_rank = NULL WHERE id = ?", arguments: [itemID])
+            }
+        }
+    }
+
     // MARK: - Listing
 
     /// Pinned items, in the order the user arranged them.

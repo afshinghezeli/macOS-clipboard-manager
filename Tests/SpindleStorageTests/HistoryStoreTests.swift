@@ -118,4 +118,17 @@ struct HistoryStoreTests {
         }
         #expect(try await history.thumbnail(for: id) == Data([0xFF, 0xD8]))
     }
+
+    @Test
+    func pinningAppendsAndUnpinningReturnsToHistory() async throws {
+        let a = try await add("a")
+        let b = try await add("b")
+        try await history.setPinned(b, true)
+        try await history.setPinned(a, true)
+        try await history.setPinned(b, true)  // already pinned: keeps its place
+        #expect(try await history.pinned().map(\.preview) == ["b", "a"])
+        try await history.setPinned(b, false)
+        #expect(try await history.pinned().map(\.preview) == ["a"])
+        #expect(try await history.recent().map(\.preview) == ["b"])
+    }
 }
