@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Please check the "Not planned" list in the [roadmap](https://github.com/afshinghezeli/clipboard-manager/blob/main/docs/roadmap.md) first. Spindle deliberately does one job.
+        Please check the "Not planned" list in the [roadmap](https://github.com/afshinghezeli/macOS-clipboard-manager/blob/main/docs/roadmap.md) first. Spindle deliberately does one job.
   - type: textarea
     id: problem
     attributes:

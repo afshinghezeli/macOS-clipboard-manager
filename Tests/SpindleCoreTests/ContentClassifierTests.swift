@@ -6,7 +6,7 @@ import Testing
 @Suite
 struct TextShapeTests {
     @Test(arguments: [
-        "https://github.com/afshinghezeli/clipboard-manager",
+        "https://github.com/afshinghezeli/macOS-clipboard-manager",
         "http://localhost:8080/health",
         "  https://example.org/path?q=1#frag  ",
         "ftp://files.example.org/pub",

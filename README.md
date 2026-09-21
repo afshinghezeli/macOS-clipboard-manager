@@ -34,8 +34,8 @@ Spindle is being built against explicit budgets: search results within 16 ms of 
 You need macOS 15 and the Command Line Tools (`xcode-select --install`); Xcode is optional.
 
 ```sh
-git clone https://github.com/afshinghezeli/clipboard-manager.git
-cd clipboard-manager
+git clone https://github.com/afshinghezeli/macOS-clipboard-manager.git
+cd macOS-clipboard-manager
 make setup && make run
 ```
 
