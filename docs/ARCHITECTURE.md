@@ -15,9 +15,9 @@ Spindle is a menu bar agent (`LSUIElement`) with no Dock icon. It does three thi
 The Swift package is split so that most of the logic can be tested without AppKit or a running app.
 
 ```
-Spindle (executable)     composition root: AppDelegate, status item, main menu, Sparkle
+Spindle (executable)     composition root: AppDelegate, main menu, Sparkle
    │
-   ├── SpindleUI         panel window, history table, preview, settings, onboarding
+   ├── SpindleUI         menu bar icon, panel window, history table, preview, settings, onboarding
    │     ├── SpindleStorage
    │     └── SpindleSystem
    │

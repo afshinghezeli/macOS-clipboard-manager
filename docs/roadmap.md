@@ -40,7 +40,7 @@ Repository, tooling and build, before any feature code.
 - [x] M0.5 `CLAUDE.md`: project brief, working agreement, commit and versioning rules, toolchain constraints.
 - [x] M0.6 Contributor docs: CONTRIBUTING, SECURITY, `docs/development.md`, `docs/releasing.md`, a README that is honest about the project's state.
 - [x] M0.7 Swift package: the `Spindle` executable and `SpindleUI` with its resource-bundle accessor, `.swift-format`, and `make build`, `test`, `lint`, `format` and `check`. The other library targets are added by the first task that puts code in them (M1.1, M1.4, M1.8).
-- [ ] M0.8 App bundle: `Scripts/bundle.sh`, the Info.plist template, entitlements, a stable dev signing identity (`make setup-signing`), and `make app`, `run` and `verify-bundle`. Done when the app launches as a menu bar agent with a status item and survives `codesign --verify --strict`.
+- [x] M0.8 App bundle: `Scripts/bundle.sh`, the Info.plist template, entitlements, a stable dev signing identity (`make setup-signing`), and `make app`, `run` and `verify-bundle`. Done when the app launches as a menu bar agent with a status item and survives `codesign --verify --strict`.
 - [ ] M0.9 Sandbox spike for [ADR 0002](adr/0002-ship-a-sandboxed-developer-id-app.md): a sandboxed dev build (1) posts ⌘V into TextEdit and (2) updates itself with Sparkle from a local appcast. Accept or supersede the ADR based on the result.
 - [ ] M0.10 CI: build, test and lint on `macos-15` with Xcode 16.4 (same Swift as local), a non-blocking job on the newest Xcode, PR title check, Dependabot, issue forms and PR template.
 - [ ] M0.11 Release plumbing without signing: `version.txt`, release-please config and workflow, build number from commit count.

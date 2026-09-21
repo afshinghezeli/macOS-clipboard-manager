@@ -48,7 +48,7 @@ Non-goals (say no, or ask the owner): history sync, AI features, snippet expansi
 | `make logs` | Stream the app's `os_log` output |
 | `make bench` | Performance benchmarks (`Benchmarks/` package) |
 
-These arrive with roadmap tasks M0.7, M0.8 and M2.4. Until then use `swift build` and `swift test`.
+`make bench` arrives with roadmap task M2.4.
 
 ## Layout
 
@@ -56,8 +56,8 @@ These arrive with roadmap tasks M0.7, M0.8 and M2.4. Until then use `swift build
 Sources/SpindleCore      Foundation only: models, capture rules, folding, ranking, retention
 Sources/SpindleStorage   GRDB database, migrations, blob store, Ingestor, SearchEngine
 Sources/SpindleSystem    PasteboardGateway, ClipboardMonitor, PasteInjector, hotkeys, permissions
-Sources/SpindleUI        panel, NSTableView history list, preview, settings, onboarding
-Sources/Spindle          executable: AppDelegate, status item, main menu, Sparkle
+Sources/SpindleUI        menu bar icon, panel, NSTableView history list, preview, settings, onboarding
+Sources/Spindle          executable: AppDelegate, main menu, Sparkle
 Tests/<Target>Tests      swift-testing suites
 Scripts/                 bundle.sh, signing, notarization
 Support/                 Info.plist template, entitlements, icon, main-bundle localizations
