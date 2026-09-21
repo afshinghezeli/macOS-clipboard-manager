@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: Check (Xcode 16.4)
+    # Xcode 16.4 ships Swift 6.1.2, the same compiler and swift-format as the Command Line Tools
+    # used for local development, so formatting and warnings match what developers see.
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # the build number is the commit count
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .build/artifacts
+            .build/checkouts
+            .build/repositories
+          key: spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-${{ runner.arch }}-
+      - run: swift --version
+      - run: make check
+      - name: Assemble and verify the app (signed ad hoc)
+        run: |
+          make app
+          make verify-bundle
+
+  latest-xcode:
+    name: Build (latest Xcode)
+    # Early warning for the next toolchain. Not required: it may fail on changes that are fine today.
+    runs-on: macos-26
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: swift --version
+      - run: swift build --build-tests
+      - run: swift test --skip-build
+
+  ci-ok:
+    name: ci-ok
+    # The single required status check, so jobs can be added or renamed without editing
+    # branch protection.
+    if: always()
+    needs: [check]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: '[ "${{ needs.check.result }}" = "success" ]'
