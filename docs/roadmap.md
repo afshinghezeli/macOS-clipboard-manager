@@ -37,7 +37,7 @@ Repository, tooling and build, before any feature code.
 - [x] M0.2 Claude Code rules, skills and shared settings.
 - [x] M0.3 Initial architecture decisions (ADRs 0001–0006).
 - [x] M0.4 Architecture overview, performance budgets and this roadmap.
-- [ ] M0.5 `CLAUDE.md`: project brief, working agreement, commit and versioning rules, toolchain constraints.
+- [x] M0.5 `CLAUDE.md`: project brief, working agreement, commit and versioning rules, toolchain constraints.
 - [ ] M0.6 Contributor docs: CONTRIBUTING, CODE_OF_CONDUCT (Contributor Covenant 3.0), SECURITY, `docs/development.md`, `docs/releasing.md`, a README that is honest about the project's state.
 - [ ] M0.7 Swift package skeleton: `SpindleCore`, `SpindleStorage`, `SpindleSystem`, `SpindleUI`, and the `Spindle` executable, plus a test target per library, `.swift-format`, and `make build`, `test`, `lint`, `format` and `check`.
 - [ ] M0.8 App bundle: `Scripts/bundle.sh`, the Info.plist template, entitlements, a stable dev signing identity (`make setup-signing`), and `make app`, `run` and `verify-bundle`. Done when the app launches as a menu bar agent with a status item and survives `codesign --verify --strict`.
