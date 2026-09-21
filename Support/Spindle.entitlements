@@ -6,5 +6,9 @@
        Every key added here widens what Spindle can do; ask before adding one. -->
   <key>com.apple.security.app-sandbox</key>
   <true/>
+  <!-- Read access to files and folders the user picks in an open panel, and nothing else: the
+       Maccy folder to import, and apps to add to the ignore list. -->
+  <key>com.apple.security.files.user-selected.read-only</key>
+  <true/>
 </dict>
 </plist>

@@ -43,3 +43,5 @@ This stays **proposed** until roadmap task M0.9 proves both risky parts:
 2. A sandboxed build updates itself through Sparkle.
 
 If either fails, ship Developer ID without the sandbox instead. There are no users yet, so no container migration is needed.
+
+**Entitlements added since.** `com.apple.security.files.user-selected.read-only` (2026-09-22): read access only to what the user picks in an open panel, used to import Maccy's history and to add apps to the ignore list. Still no network access.
