@@ -73,6 +73,7 @@ Spindle records the clipboard reliably and safely, with no UI beyond the menu ba
 - [ ] M2.2 Frecency key and bumping on copy and paste.
 - [ ] M2.3 Fuzzy fallback over a small in-memory pool when exact matches are scarce.
 - [ ] M2.4 `Benchmarks/` package with deterministic 10k and 100k fixtures, `make bench`, and measured numbers in performance.md.
+- [ ] M2.5 Queries that mix long and short words ("git st") check the short words only among the 256 newest index matches of the long ones, so an older item containing all of them can be missed. Widen the window when too few candidates survive.
 
 ## M3: Panel and paste
 
