@@ -91,7 +91,7 @@ Dependencies point downward only: Core ← Storage/System ← UI ← executable.
 The full rules are in the `commit` skill and `CONTRIBUTING.md`; `.githooks/commit-msg` enforces the format.
 
 - Conventional Commits 1.0: `<type>(<scope>)!: <description>`.
-- Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`, `style`, `chore`, `revert`.
+- Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`, `style`, `chore`, `revert`. `feat` only when behavior reaches users; groundwork nothing calls yet is `chore(<scope>)`.
 - Scopes (optional): `capture`, `history`, `storage`, `search`, `panel`, `paste`, `hotkey`, `privacy`, `settings`, `onboarding`, `menubar`, `updater`, `import`, `l10n`, `a11y`, `deps`, `release`.
 - Description: imperative, lowercase, no period, about 50 characters (72 at most). `feat`, `fix` and `perf` subjects are shown to users in the changelog and the update window, so describe the effect.
 - The body explains why, wrapped at 72 columns. Breaking changes get `!` and a `BREAKING CHANGE:` footer.

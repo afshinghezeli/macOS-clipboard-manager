@@ -33,6 +33,7 @@ feat(search): match text inside copied screenshots
 - **Types:** `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`, `style`, `chore`, `revert`.
 - **Scopes** (optional): `capture`, `history`, `storage`, `search`, `panel`, `paste`, `hotkey`, `privacy`, `settings`, `onboarding`, `menubar`, `updater`, `import`, `l10n`, `a11y`, `deps`, `release`.
 - **Description:** imperative, lowercase first word, no trailing period, 72 characters at most.
+- **`feat` is for what users can see.** Internal building blocks that nothing uses yet are `chore`, so each feature appears once in the changelog.
 - **Breaking changes** (data that isn't migrated, a changed default shortcut, a removed feature, a higher minimum macOS) get a `!`, as in `feat(hotkey)!: …`, and a `BREAKING CHANGE:` note in the description.
 
 The hook enabled by `make setup` checks commit messages locally.

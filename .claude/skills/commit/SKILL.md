@@ -42,11 +42,12 @@ Header: `<type>(<scope>)!: <description>`, where the scope and `!` are optional.
 | `build` | Package.swift, Scripts/, bundling, dependencies | none |
 | `ci` | .github/workflows | none |
 | `style` | Formatting only | none |
-| `chore` | Anything else (tooling, repo config) | none |
+| `chore` | Tooling, repo config, and groundwork users can't see yet (types or services nothing calls) | none |
 
 Scopes (optional, closed list): `capture`, `history`, `storage`, `search`, `panel`, `paste`, `hotkey`, `privacy`, `settings`, `onboarding`, `menubar`, `updater`, `import`, `l10n`, `a11y`, `deps`, `release`.
 
 - Description: imperative mood, lowercase first word, no trailing period. Aim for 50 characters; the hook rejects more than 72.
+- Use `feat` for the commit that makes a capability reach users, not for each building block on the way. Groundwork is `chore(<scope>)`, so the changelog lists features once.
 - `feat`, `fix` and `perf` descriptions are read by users. They land verbatim in CHANGELOG.md, the GitHub release and the Sparkle update window. Describe the effect: `fix(paste): keep Terminal focused after pasting`, not `fix: fix bug in PasteInjector`.
 - Body (optional): explain why and what behavior changed, wrapped at 72 columns. Skip it when the header says everything. Don't list files; the diff already does.
 - Breaking changes: add `!` before the colon and a `BREAKING CHANGE: <what users must know>` footer. For an app that means a history store that isn't migrated, a changed default shortcut, a removed feature or a higher minimum macOS.
