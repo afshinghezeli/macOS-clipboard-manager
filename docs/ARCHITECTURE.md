@@ -150,3 +150,4 @@ Only `Sendable` values cross these boundaries. `NSImage`, `NSAttributedString` a
 | [0004](adr/0004-access-the-pasteboard-only-from-the-main-actor.md) | Access the pasteboard only from one main-actor type | accepted |
 | [0005](adr/0005-render-the-history-list-with-nstableview.md) | Render the history list with NSTableView | accepted |
 | [0006](adr/0006-version-with-semver-and-release-please.md) | Version with SemVer and release with release-please | accepted |
+| [0007](adr/0007-sign-releases-with-a-self-signed-certificate-for-now.md) | Sign releases with a self-signed certificate until a Developer ID is worth it | accepted |

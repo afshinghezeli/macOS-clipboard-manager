@@ -107,7 +107,7 @@ The core loop works end to end: shortcut, type, ↵, pasted.
 
 - [ ] M5.1 App icon, drawn by hand. Needs the owner.
 - [ ] M5.2 Sparkle: updater controller, "check for updates", feed URL, beta channel setting.
-- [ ] M5.3 Developer ID signing and notarization scripts. Needs the owner's Apple Developer account.
+- [ ] M5.3 Release signing with a stable self-signed certificate held in CI secrets ([ADR 0007](adr/0007-sign-releases-with-a-self-signed-certificate-for-now.md)), with Developer ID and notarization ready to switch on later.
 - [ ] M5.4 Release workflow: universal build, sign, notarize, DMG and ZIP, appcast, publish the draft release.
 - [ ] M5.5 Homebrew tap.
 - [ ] M5.6 README with real screenshots, shortcuts table, privacy section, permissions FAQ and a short motivation.
