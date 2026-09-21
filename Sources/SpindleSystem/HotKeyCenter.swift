@@ -50,6 +50,13 @@ public final class HotKeyCenter {
         UnregisterEventHotKey(registration.reference)
     }
 
+    /// Whether `shortcut` could be registered right now: no other app holds it.
+    public func isAvailable(_ shortcut: KeyboardShortcut) -> Bool {
+        guard let id = try? register(shortcut, action: {}) else { return false }
+        unregister(id)
+        return true
+    }
+
     public func unregisterAll() {
         for id in Array(registrations.keys) { unregister(id) }
     }

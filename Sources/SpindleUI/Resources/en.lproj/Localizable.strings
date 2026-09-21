@@ -105,3 +105,15 @@
 
 /* Menu item; opens the settings window. */
 "Settings…" = "Settings…";
+
+/* Shortcut recorder while recording. */
+"Type the shortcut…" = "Type the shortcut…";
+
+/* Resets the shortcut to ⌃⌘V. */
+"Use Default" = "Use Default";
+
+/* Shortcut recorder: the combination has no Command or Control key. */
+"Include ⌘ or ⌃, so the shortcut doesn't type a character." = "Include ⌘ or ⌃, so the shortcut doesn't type a character.";
+
+/* Shortcut recorder: the combination belongs to another app. */
+"Another app already uses %@." = "Another app already uses %@.";
