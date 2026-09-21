@@ -34,6 +34,16 @@ Debug builds use the bundle id `com.afshinghezeli.Spindle.dev` and show up as "S
 
 Always launch the app with `open` (which `make run` does), never by running the binary inside the bundle. macOS attributes permission prompts from a bare binary to Terminal.
 
+## Looking at the UI without a screenshot
+
+Screen captures need the Screen Recording permission, so the UI tests can render views to PNG files instead:
+
+```sh
+SPINDLE_SNAPSHOT_DIR=/tmp/spindle-snapshots swift test --filter Snapshot
+```
+
+A debug build also opens the panel at launch when started with `open --env SPINDLE_OPEN_PANEL=1 dist/debug/Spindle.app`.
+
 ## Why a local signing identity
 
 Spindle pastes by posting ⌘V to the app you were using. macOS only allows that for apps you have approved in System Settings → Privacy & Security → Accessibility, and it remembers the approval by the app's code signature. An ad-hoc signature changes with every build, so the approval silently stops applying: the switch in System Settings still looks on, but pasting does nothing.
