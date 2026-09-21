@@ -23,8 +23,17 @@ let package = Package(
             swiftSettings: swiftSettings
         ),
         .target(
+            name: "SpindleCore",
+            swiftSettings: swiftSettings
+        ),
+        .target(
             name: "SpindleUI",
             resources: [.process("Resources")],
+            swiftSettings: swiftSettings
+        ),
+        .testTarget(
+            name: "SpindleCoreTests",
+            dependencies: ["SpindleCore"],
             swiftSettings: swiftSettings
         ),
         .testTarget(
