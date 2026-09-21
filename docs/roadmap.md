@@ -96,7 +96,7 @@ The core loop works end to end: shortcut, type, ↵, pasted.
 
 ## M4: Settings, onboarding and privacy
 
-- [ ] M4.1 Typed settings store over `UserDefaults`.
+- [x] M4.1 Typed settings store over `UserDefaults`.
 - [ ] M4.2 Settings window: General, History, Privacy, Advanced.
 - [ ] M4.3 Shortcut recorder.
 - [ ] M4.4 Launch at login with `SMAppService`, including the "requires approval" state.

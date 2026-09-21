@@ -10,7 +10,8 @@ final class CaptureController {
     private let logger = Logger(subsystem: Diagnostics.subsystem, category: "Capture")
     private let ingestor: Ingestor
     private let history: HistoryStore
-    private let filter = CaptureFilter()
+    /// Read for every copy, so changes in Settings apply immediately.
+    var filter: @MainActor () -> CaptureFilter = { CaptureFilter() }
     private var pause = CapturePause()
     private var monitor: ClipboardMonitor?
 
@@ -68,7 +69,7 @@ final class CaptureController {
     private func handle(_ read: PasteboardRead) {
         switch read {
         case .copy(let copy):
-            if let reason = pause.admit(at: copy.capturedAt) ?? filter.skipReason(for: copy) {
+            if let reason = pause.admit(at: copy.capturedAt) ?? filter().skipReason(for: copy) {
                 logger.debug("Skipped a copy: \(String(describing: reason), privacy: .public)")
                 return
             }

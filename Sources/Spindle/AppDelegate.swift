@@ -12,7 +12,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var capture: CaptureController?
     private var maintenance: Maintenance?
     private var pasteService: PasteService?
-    private var openShortcut = KeyboardShortcut.openPanelDefault
+    private let settings = Settings()
+    private var shortcutRegistration: UInt32?
     /// The app that was in front when the panel opened; pasting goes there.
     private var pasteTarget: NSRunningApplication?
     private var panelModel = PanelModel()
@@ -33,6 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Spindle's own write and not captured again.
             let gateway = PasteboardGateway()
             let capture = CaptureController(ingestor: Ingestor(database: database, blobs: blobs), history: history)
+            capture.filter = { [settings] in settings.captureFilter }
             capture.start(gateway: gateway)
             self.capture = capture
             pasteService = PasteService(history: history, gateway: gateway)
@@ -43,10 +45,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 Task { await self.panelModel.apply(change) }
             }
 
-            // M4.2 makes the policy a setting; until then everything is kept up to 2 GB.
             let maintenance = Maintenance(
                 pruner: Pruner(database: database, blobs: blobs),
-                policy: { RetentionPolicy() },
+                policy: { [settings] in settings.retention },
                 didPrune: { [weak capture] in capture?.refreshItemCount() })
             maintenance.start()
             self.maintenance = maintenance
@@ -81,6 +82,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panelModel.onPaste = { [weak self] item, mode in
             guard let self, let pasteService = self.pasteService else { return }
             let target = self.pasteTarget
+            // With "paste as plain text by default", Return and ⇧Return trade places.
+            let mode: PasteMode =
+                switch (mode, self.settings.prefersPlainText) {
+                case (.paste, true): .pasteAsPlainText
+                case (.pasteAsPlainText, true): .paste
+                default: mode
+                }
             Task { await pasteService.perform(item, mode: mode, into: target, hidePanel: { panel.hide() }) }
         }
         self.panel = panel
@@ -100,12 +108,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return false
     }
 
+    /// Registers the shortcut from Settings, and again whenever it changes there.
     private func registerShortcut() {
+        if let shortcutRegistration { HotKeyCenter.shared.unregister(shortcutRegistration) }
+        shortcutRegistration = nil
         do {
-            _ = try HotKeyCenter.shared.register(openShortcut) { [weak self] in self?.shortcutPressed() }
+            shortcutRegistration = try HotKeyCenter.shared.register(settings.openShortcut) { [weak self] in
+                self?.shortcutPressed()
+            }
         } catch {
             // M4.5 tells the user and offers to pick another one.
             logger.error("Registering the shortcut failed: \(String(describing: error), privacy: .public)")
+        }
+        withObservationTracking {
+            _ = settings.openShortcut
+        } onChange: { [weak self] in
+            Task { @MainActor in self?.registerShortcut() }
         }
     }
 
@@ -129,12 +147,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private var menuShortcut: (key: String, modifiers: NSEvent.ModifierFlags)? {
-        guard let key = KeyboardLayout.character(forKeyCode: openShortcut.keyCode) else { return nil }
+        guard let key = KeyboardLayout.character(forKeyCode: settings.openShortcut.keyCode) else { return nil }
         var flags: NSEvent.ModifierFlags = []
-        if openShortcut.modifiers.contains(.control) { flags.insert(.control) }
-        if openShortcut.modifiers.contains(.option) { flags.insert(.option) }
-        if openShortcut.modifiers.contains(.shift) { flags.insert(.shift) }
-        if openShortcut.modifiers.contains(.command) { flags.insert(.command) }
+        if settings.openShortcut.modifiers.contains(.control) { flags.insert(.control) }
+        if settings.openShortcut.modifiers.contains(.option) { flags.insert(.option) }
+        if settings.openShortcut.modifiers.contains(.shift) { flags.insert(.shift) }
+        if settings.openShortcut.modifiers.contains(.command) { flags.insert(.command) }
         return (key, flags)
     }
 
