@@ -27,6 +27,11 @@ final class CaptureController {
     }
 
     var isPaused: Bool { pause.isPaused(at: .now) }
+    var isSkippingNextCopy: Bool { pause.skipsNextCopy }
+
+    func skipNextCopy() {
+        pause.skipNextCopy()
+    }
 
     func start(gateway: PasteboardGateway) {
         let monitor = ClipboardMonitor(gateway: gateway) { [weak self] read in self?.handle(read) }

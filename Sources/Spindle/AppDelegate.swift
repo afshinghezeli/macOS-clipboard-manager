@@ -59,10 +59,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             state: { [weak self] in
                 StatusMenuState(
                     itemCount: self?.capture?.itemCount, isPaused: self?.capture?.isPaused ?? false,
-                    openShortcut: self?.menuShortcut)
+                    isSkippingNextCopy: self?.capture?.isSkippingNextCopy ?? false, openShortcut: self?.menuShortcut)
             },
-            openPanel: { [weak self] in self?.openPanel() },
-            togglePause: { [weak self] in self?.capture?.togglePause() })
+            actions: StatusMenuActions(
+                togglePanel: { [weak self] in
+                    guard let self, self.panel?.didJustHide != true else { return }
+                    self.shortcutPressed()
+                },
+                togglePause: { [weak self] in self?.capture?.togglePause() },
+                skipNextCopy: { [weak self] in self?.capture?.skipNextCopy() }))
         // Built now, so the first open is instant.
         let panel = PanelController(rootView: PanelView(model: panelModel))
         panel.onCommand = { [weak self] in self?.panelModel.handle($0) ?? false }
@@ -86,6 +91,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if ProcessInfo.processInfo.environment["SPINDLE_OPEN_PANEL"] == "1" { openPanel() }
         #endif
         logger.notice("Launched")
+    }
+
+    /// Opening Spindle again from Finder or Spotlight shows the panel. macOS 26 can hide menu bar
+    /// icons, so this may be the only way someone finds it.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        openPanel()
+        return false
     }
 
     private func registerShortcut() {

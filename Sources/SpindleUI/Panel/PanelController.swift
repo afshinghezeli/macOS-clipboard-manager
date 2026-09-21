@@ -48,6 +48,12 @@ public final class PanelController {
     }
 
     private var isShowingMenu = false
+    private var lastHide = Date.distantPast
+
+    /// True just after the panel closed. Clicking the menu bar icon while the panel is open first
+    /// takes focus from the panel, which closes it, and then delivers the click; that click must
+    /// not open the panel again.
+    public var didJustHide: Bool { Date.now.timeIntervalSince(lastHide) < 0.3 }
 
     public var isVisible: Bool { window.isVisible }
 
@@ -81,6 +87,7 @@ public final class PanelController {
     public func hide() {
         guard window.isVisible else { return }
         window.orderOut(nil)
+        lastHide = .now
         onHide?()
     }
 

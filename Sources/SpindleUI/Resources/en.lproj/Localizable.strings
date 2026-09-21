@@ -99,3 +99,9 @@
 
 /* Filter: only colors. */
 "Colors" = "Colors";
+
+/* Menu item; the next copy isn't recorded. */
+"Ignore Next Copy" = "Ignore Next Copy";
+
+/* Menu item; opens the settings window. */
+"Settings…" = "Settings…";
