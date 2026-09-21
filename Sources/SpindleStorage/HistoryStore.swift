@@ -53,6 +53,29 @@ public struct HistoryStore: Sendable {
         }
     }
 
+    /// Moves a pinned item up (negative `offset`) or down among the pinned items.
+    public func movePin(_ itemID: Int64, by offset: Int) async throws {
+        try await database.writer.write { db in
+            var order = try Int64.fetchAll(
+                db, sql: "SELECT id FROM item WHERE pinned_rank IS NOT NULL ORDER BY pinned_rank")
+            guard let index = order.firstIndex(of: itemID) else { return }
+            let target = min(max(index + offset, 0), order.count - 1)
+            guard target != index else { return }
+            order.insert(order.remove(at: index), at: target)
+            for (rank, id) in order.enumerated() {
+                try db.execute(sql: "UPDATE item SET pinned_rank = ? WHERE id = ?", arguments: [rank + 1, id])
+            }
+        }
+    }
+
+    /// Removes the item from the history. Its text is overwritten in the search index; payload
+    /// files are removed by the next sweep once nothing refers to them.
+    public func delete(_ itemID: Int64) async throws {
+        try await database.writer.write { db in
+            try db.execute(sql: "DELETE FROM item WHERE id = ?", arguments: [itemID])
+        }
+    }
+
     // MARK: - Listing
 
     /// Pinned items, in the order the user arranged them.

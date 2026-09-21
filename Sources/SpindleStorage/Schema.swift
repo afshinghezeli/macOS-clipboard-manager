@@ -79,4 +79,10 @@ enum Schema {
                 END;
                 """)
     }
+
+    /// Deleted text is overwritten on disk instead of lingering in freed pages of the search index.
+    /// Someone deleting a password they copied by accident expects it gone.
+    static func v2(_ db: Database) throws {
+        try db.execute(sql: "INSERT INTO item_fts(item_fts, rank) VALUES ('secure-delete', 1)")
+    }
 }

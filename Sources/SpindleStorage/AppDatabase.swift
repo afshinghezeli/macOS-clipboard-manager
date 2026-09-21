@@ -27,6 +27,7 @@ public final class AppDatabase: Sendable {
             }
             try db.execute(
                 sql: """
+                    PRAGMA secure_delete = FAST;
                     PRAGMA synchronous = NORMAL;
                     PRAGMA cache_size = -4096;
                     PRAGMA temp_store = MEMORY;
@@ -51,6 +52,7 @@ public final class AppDatabase: Sendable {
         migrator.eraseDatabaseOnSchemaChange = true
         #endif
         migrator.registerMigration("v1", migrate: Schema.v1)
+        migrator.registerMigration("v2", migrate: Schema.v2)
         return migrator
     }
 }

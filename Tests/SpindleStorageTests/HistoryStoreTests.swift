@@ -202,4 +202,39 @@ struct HistoryStoreTests {
         #expect(plain.map { $0.representations.map(\.flavor) } == [[.plainText], [.plainText]])
         #expect(try await history.pasteItems(for: 999).isEmpty)
     }
+
+    @Test
+    func pinsCanBeReordered() async throws {
+        var ids: [Int64] = []
+        for text in ["a", "b", "c"] {
+            let id = try await add(text)
+            try await history.setPinned(id, true)
+            ids.append(id)
+        }
+        try await history.movePin(ids[2], by: -1)
+        #expect(try await history.pinned().map(\.preview) == ["a", "c", "b"])
+        try await history.movePin(ids[0], by: -5)  // already first: stays
+        try await history.movePin(ids[0], by: 10)
+        #expect(try await history.pinned().map(\.preview) == ["c", "b", "a"])
+    }
+
+    @Test
+    func deletingRemovesTheItemEverywhere() async throws {
+        let id = try await add("secret token 12345")
+        try await history.delete(id)
+        #expect(try await history.summary(for: id) == nil)
+        #expect(try await history.itemCount() == 0)
+        let matches = try await database.writer.read { db in
+            try Int.fetchOne(db, sql: "SELECT count(*) FROM item_fts WHERE item_fts MATCH '\"token\"'")
+        }
+        #expect(matches == 0)
+    }
+
+    @Test
+    func theSearchIndexOverwritesDeletedText() async throws {
+        let enabled = try await database.writer.read { db in
+            try Int.fetchOne(db, sql: "SELECT v FROM item_fts_config WHERE k = 'secure-delete'")
+        }
+        #expect(enabled == 1)
+    }
 }
