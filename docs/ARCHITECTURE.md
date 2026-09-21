@@ -105,7 +105,7 @@ Tables ([ADR 0003](adr/0003-store-history-in-sqlite-with-grdb.md)):
 | `source_app` | Bundle id and name, normalized |
 | `item_fts` | FTS5 trigram index over `search_text`, with `rowid = seq` |
 
-Re-copying or pasting an item gives it a new `seq`, which moves it to the top without duplicating anything. Pinned items are never pruned.
+Re-copying or pasting an item gives it a new `seq`, which moves it to the top without duplicating anything. Text counts as the same item when its plain text matches, even if it comes from another app with different formatting; the newest formatting replaces the old. Images match by their bytes and files by their paths. Pinned items are never pruned.
 
 ## Search
 

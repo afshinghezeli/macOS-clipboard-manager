@@ -9,6 +9,10 @@ public struct ContentHash: Hashable, Sendable, CustomStringConvertible {
         bytes = Data(SHA256.hash(data: data))
     }
 
+    init(digest: SHA256.Digest) {
+        bytes = Data(digest)
+    }
+
     init?(bytes: Data) {
         guard bytes.count == SHA256.byteCount else { return nil }
         self.bytes = bytes

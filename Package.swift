@@ -50,7 +50,7 @@ let package = Package(
         ),
         .testTarget(
             name: "SpindleStorageTests",
-            dependencies: ["SpindleStorage"],
+            dependencies: ["SpindleCore", "SpindleStorage"],
             swiftSettings: swiftSettings
         ),
         .testTarget(
