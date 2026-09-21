@@ -44,6 +44,19 @@ struct BlobStoreTests {
     }
 
     @Test
+    func rewritingAnOldOrphanProtectsItFromTheSweep() throws {
+        // An orphaned file from a pruned item, older than the sweep's grace period...
+        let payload = Data("copied again later".utf8)
+        let hash = try store.write(payload)
+        try age(hash, by: 7200)
+        // ...is reused by a new copy with the same content, whose row isn't committed yet.
+        try store.write(payload)
+        let removed = try store.sweep(keeping: [], olderThan: .now.addingTimeInterval(-3600))
+        #expect(removed == 0)
+        #expect(try store.read(hash) == payload)
+    }
+
+    @Test
     func removingAMissingPayloadIsNotAnError() throws {
         try store.remove(ContentHash(of: Data("never stored".utf8)))
     }

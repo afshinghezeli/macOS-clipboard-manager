@@ -65,7 +65,13 @@ public struct BlobStore: Sendable {
     public func write(_ data: Data) throws -> ContentHash {
         let hash = ContentHash(of: data)
         let url = url(for: hash)
-        if FileManager.default.fileExists(atPath: url.path(percentEncoded: false)) { return hash }
+        let path = url.path(percentEncoded: false)
+        if FileManager.default.fileExists(atPath: path) {
+            // The file may be an old orphan about to be referenced again. Refreshing its date puts
+            // it inside the sweep's grace period until the new row is committed.
+            try FileManager.default.setAttributes([.modificationDate: Date.now], ofItemAtPath: path)
+            return hash
+        }
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         // Atomic: written to a temporary file and renamed, so a crash never leaves a partial payload.
         try data.write(to: url, options: .atomic)
