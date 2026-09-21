@@ -24,13 +24,22 @@ History size must not change the idle memory figure. Nothing in Spindle loads th
 
 All of this works with the Command Line Tools; Instruments is optional.
 
-- **Signposts.** Capture, ingest, search, panel open, first frame and thumbnail generation are wrapped in `OSSignposter` intervals. Read them with `log show --signpost --last 5m --predicate 'subsystem == "com.afshinghezeli.Spindle"'`, or in Instruments' Points of Interest track.
+- **Signposts.** Capture, ingest, search, panel open, first frame and thumbnail generation are wrapped in `OSSignposter` intervals. Read them with `/usr/bin/log show --signpost --last 5m --predicate 'subsystem == "com.afshinghezeli.Spindle"'` (use the full path: in zsh, `log` is a shell builtin), or in Instruments' Points of Interest track.
 - **Benchmarks.** `make bench` runs the `Benchmarks/` package (package-benchmark) against generated histories of 10,000 and 100,000 items (roadmap task M2.4).
 - **Memory.** `footprint -p Spindle`, with `--sample 1 --sample-duration 60` for drift.
 - **Idle CPU and wake-ups.** `top -pid $(pgrep -x Spindle) -stats pid,cpu,idlew -l 30`.
 - **Hangs.** `sample Spindle 5`.
 
 Unit tests contain a few coarse timing checks with generous headroom. They catch accidental quadratic behavior, not small regressions; the benchmarks do that.
+
+## Measured on Spindle
+
+Numbers from the app itself, replacing prototype figures as each part lands. Each row says how it was measured.
+
+| Date | Build | Mac | Metric | Result | Budget |
+|---|---|---|---|---|---|
+| 2026-09-22 | debug, M1.10 | M4, macOS 15.3 | CPU while idle, panel hidden (`top`, 20 × 1 s) | 0.02 % | ≤ 0.1 % |
+| 2026-09-22 | debug, M1.10 | M4, macOS 15.3 | Memory after a few captures (`footprint`) | 13 MB, peak 16 MB | ≤ 40 MB |
 
 ## Prototype measurements
 
