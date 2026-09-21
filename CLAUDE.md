@@ -29,7 +29,7 @@ Non-goals (say no, or ask the owner): history sync, AI features, snippet expansi
 - Keep docs in step with the code: `docs/ARCHITECTURE.md`, `docs/roadmap.md`, the README shortcut table.
 - Ask the owner first before any of these:
   - pushing, tagging, releasing or changing GitHub settings;
-  - adding a dependency, entitlement or permission;
+  - adding a dependency that no accepted ADR names, or any entitlement or permission;
   - touching a non-goal;
   - changing a default shortcut or the storage format in a way that isn't migrated.
 - Say plainly what was verified and what wasn't. UI changes need eyes on the running app. Capture, paste and hotkeys need manual checks, because TCC grants can't be scripted.
