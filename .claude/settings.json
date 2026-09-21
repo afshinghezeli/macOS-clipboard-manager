@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "permissions": {
+    "allow": [
+      "Bash(make *)",
+      "Bash(swift build *)",
+      "Bash(swift test *)",
+      "Bash(swift package *)",
+      "Bash(swift format *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git --no-pager diff *)",
+      "Bash(git --no-pager log *)",
+      "Bash(git --no-pager show *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(Scripts/bundle.sh *)",
+      "Bash(Scripts/verify-bundle.sh *)",
+      "Bash(codesign -d *)",
+      "Bash(codesign --verify *)",
+      "Bash(plutil *)",
+      "Bash(otool *)",
+      "Bash(lipo *)",
+      "Bash(log show *)",
+      "Bash(log stream *)",
+      "Bash(footprint *)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(git tag *)",
+      "Bash(git reset --hard *)",
+      "Bash(gh release *)",
+      "Bash(gh pr merge *)",
+      "Bash(gh repo edit *)",
+      "Bash(tccutil *)",
+      "Bash(Scripts/notarize.sh *)"
+    ],
+    "deny": [
+      "Bash(git commit *--no-verify*)",
+      "Bash(git push *--force*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format-swift.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
