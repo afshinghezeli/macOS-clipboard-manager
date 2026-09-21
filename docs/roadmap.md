@@ -97,13 +97,13 @@ The core loop works end to end: shortcut, type, ↵, pasted.
 ## M4: Settings, onboarding and privacy
 
 - [x] M4.1 Typed settings store over `UserDefaults`.
-- [ ] M4.2 Settings window: General, History, Privacy, Advanced.
-- [ ] M4.3 Shortcut recorder.
-- [ ] M4.4 Launch at login with `SMAppService`, including the "requires approval" state.
+- [x] M4.2 Settings window: General, History, Privacy, Advanced.
+- [x] M4.3 Shortcut recorder.
+- [x] M4.4 Launch at login with `SMAppService`, including the "requires approval" state.
 - [ ] M4.5 Onboarding: what Spindle keeps, the paste permission, clipboard access on macOS 15.4+, choosing the shortcut.
 - [ ] M4.6 Pasteboard access handling: degraded mode when macOS asks or denies, a banner, and deep links to System Settings.
 - [ ] M4.7 Pause for a period and ignore the next copy, from the menu and a shortcut.
-- [ ] M4.8 Clear history: FTS secure-delete, VACUUM, blob removal, with confirmation.
+- [x] M4.8 Clear history: FTS secure-delete, VACUUM, blob removal, with confirmation.
 - [ ] M4.9 Import from Maccy through an open panel.
 
 ## M5: First release (0.1.0)

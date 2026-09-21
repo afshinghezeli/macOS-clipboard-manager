@@ -34,7 +34,7 @@ final class SettingsTests {
         let settings = Settings(defaults: defaults)
         settings.openShortcut = KeyboardShortcut(keyCode: 49, modifiers: [.option, .command])
         settings.retention = RetentionPolicy(
-            maxAge: 30 * 86_400, maxTotalBytes: 1 << 30, maxAgeByKind: [.image: 7 * 86_400.0])
+            maxAge: 30 * 86_400, maxTotalBytes: 1_000_000_000, maxAgeByKind: [.image: 7 * 86_400.0])
         settings.ignoredApps.insert("com.tinyspeck.slackmacgap")
         settings.keepsRemoteCopies = false
         settings.prefersPlainText = true

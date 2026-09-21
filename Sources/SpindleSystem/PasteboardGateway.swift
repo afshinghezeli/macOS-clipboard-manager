@@ -65,6 +65,9 @@ public final class PasteboardGateway {
 
     public var changeCount: Int { pasteboard.changeCount }
 
+    /// What macOS currently allows (System Settings → Privacy & Security → Paste from Other Apps).
+    public var currentAccess: PasteboardAccess { access(pasteboard) }
+
     public func read(frontmostApp: AppIdentity, at date: Date) -> PasteboardRead {
         // Reads block the main thread; anything over 16 ms here is worth investigating.
         let interval = signposter.beginInterval("capture")

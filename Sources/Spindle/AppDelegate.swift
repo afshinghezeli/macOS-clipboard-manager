@@ -12,6 +12,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var capture: CaptureController?
     private var maintenance: Maintenance?
     private var pasteService: PasteService?
+    private var settingsWindow: SettingsWindowController?
+    private var gateway: PasteboardGateway?
+    private var pruner: Pruner?
     private let settings = Settings()
     private var shortcutRegistration: UInt32?
     /// The app that was in front when the panel opened; pasting goes there.
@@ -38,6 +41,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             capture.start(gateway: gateway)
             self.capture = capture
             pasteService = PasteService(history: history, gateway: gateway)
+            self.gateway = gateway
+            let pruner = Pruner(database: database, blobs: blobs)
+            self.pruner = pruner
 
             panelModel = PanelModel(history: history, search: SearchEngine(database: database))
             capture.onChange = { [weak self] change in
@@ -46,7 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
 
             let maintenance = Maintenance(
-                pruner: Pruner(database: database, blobs: blobs),
+                pruner: pruner,
                 policy: { [settings] in settings.retention },
                 didPrune: { [weak capture] in capture?.refreshItemCount() })
             maintenance.start()
@@ -68,7 +74,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self.shortcutPressed()
                 },
                 togglePause: { [weak self] in self?.capture?.togglePause() },
-                skipNextCopy: { [weak self] in self?.capture?.skipNextCopy() }))
+                skipNextCopy: { [weak self] in self?.capture?.skipNextCopy() },
+                openSettings: { [weak self] in self?.openSettings() }))
+        settingsWindow = SettingsWindowController(
+            settings: settings,
+            environment: SettingsEnvironment(
+                pasteboardAccess: { [weak self] in self?.gateway?.currentAccess ?? .allowed },
+                clearHistory: { [weak self] in await self?.clearHistory() }))
         // Built now, so the first open is instant.
         let panel = PanelController(rootView: PanelView(model: panelModel))
         panel.onCommand = { [weak self] in self?.panelModel.handle($0) ?? false }
@@ -99,6 +111,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if ProcessInfo.processInfo.environment["SPINDLE_OPEN_PANEL"] == "1" { openPanel() }
         #endif
         logger.notice("Launched")
+    }
+
+    @objc func openSettings() {
+        panel?.hide()
+        settingsWindow?.show()
+    }
+
+    private func clearHistory() async {
+        do {
+            let removed = try await pruner?.clearHistory() ?? 0
+            logger.notice("Cleared the history: \(removed) items removed")
+        } catch {
+            logger.error("Clearing the history failed: \(error.localizedDescription, privacy: .public)")
+        }
+        capture?.refreshItemCount()
+        await panelModel.reload()
     }
 
     /// Opening Spindle again from Finder or Spotlight shows the panel. macOS 26 can hide menu bar
