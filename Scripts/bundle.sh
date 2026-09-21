@@ -103,6 +103,9 @@ done
 shopt -u nullglob
 
 # ------------------------------------------------------------------------------- sign
+# Some dependencies' resources (GRDB's privacy manifest) are checked out read-only; codesign and
+# xattr need to write to them.
+chmod -R u+w "$app"
 xattr -cr "$app"
 "${sign[@]}" --entitlements Support/Spindle.entitlements "$app"
 codesign --verify --strict "$app"
