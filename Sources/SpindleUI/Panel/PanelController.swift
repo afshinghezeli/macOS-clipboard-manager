@@ -15,25 +15,9 @@ public final class PanelController {
     public var onCommand: ((PanelCommand) -> Bool)?
 
     public init(rootView: some View) {
-        let background = NSVisualEffectView()
-        background.material = .popover
-        background.blendingMode = .behindWindow
-        // The panel never makes Spindle the active app, and the default `.followsWindowActiveState`
-        // would then render it flat.
-        background.state = .active
-
         let hosting = NSHostingView(rootView: rootView)
         hosting.sizingOptions = []
-        hosting.translatesAutoresizingMaskIntoConstraints = false
-        background.addSubview(hosting)
-        NSLayoutConstraint.activate([
-            hosting.leadingAnchor.constraint(equalTo: background.leadingAnchor),
-            hosting.trailingAnchor.constraint(equalTo: background.trailingAnchor),
-            hosting.topAnchor.constraint(equalTo: background.topAnchor),
-            hosting.bottomAnchor.constraint(equalTo: background.bottomAnchor),
-        ])
-
-        window = PanelWindow(contentView: background)
+        window = PanelWindow(contentView: Self.background(around: hosting))
         window.onResignKey = { [weak self] in
             guard let self, self.window.attachedSheet == nil, !self.isShowingMenu else { return }
             self.hide()
@@ -56,6 +40,46 @@ public final class PanelController {
     public var didJustHide: Bool { Date.now.timeIntervalSince(lastHide) < 0.3 }
 
     public var isVisible: Bool { window.isVisible }
+
+    /// The panel's backdrop: Liquid Glass on macOS 26 and later, the translucent popover material
+    /// before that, and a plain window background when Reduce Transparency is on.
+    private static func background(around content: NSView) -> NSView {
+        if NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency {
+            let plain = NSView()
+            plain.wantsLayer = true
+            plain.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+            return embed(content, in: plain)
+        }
+        #if compiler(>=6.2)
+        // Needs the macOS 26 SDK, which the Command Line Tools on older macOS don't have; CI's
+        // newest-Xcode job builds this branch.
+        if #available(macOS 26.0, *) {
+            let glass = NSGlassEffectView()
+            glass.cornerRadius = 16
+            glass.contentView = content
+            return glass
+        }
+        #endif
+        let material = NSVisualEffectView()
+        material.material = .popover
+        material.blendingMode = .behindWindow
+        // The panel never makes Spindle the active app, and the default `.followsWindowActiveState`
+        // would then render it flat.
+        material.state = .active
+        return embed(content, in: material)
+    }
+
+    private static func embed(_ content: NSView, in container: NSView) -> NSView {
+        content.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(content)
+        NSLayoutConstraint.activate([
+            content.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            content.topAnchor.constraint(equalTo: container.topAnchor),
+            content.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+        ])
+        return container
+    }
 
     /// Shows `actions` as a menu at the bottom right of the panel, and performs the chosen one.
     public func showActionsMenu(_ actions: [PanelAction], perform: @escaping (PanelCommand) -> Void) {

@@ -92,7 +92,7 @@ The core loop works end to end: shortcut, type, ↵, pasted.
 - [x] M3.8 Pins: pin and unpin (⌘.), a pinned section, reordering.
 - [x] M3.9 Type filter (⌘P): all, text, images, files, links, colors.
 - [x] M3.10 Status item menu: open, pause, ignore next copy, settings, quit. Reopening the app from Finder opens settings, because macOS 26 can hide menu bar icons.
-- [ ] M3.11 Liquid Glass panel background on macOS 26+, behind availability and compiler checks. Needs the macOS 26 SDK, so it is built in CI until the local toolchain is upgraded.
+- [x] M3.11 Liquid Glass panel background on macOS 26+, behind availability and compiler checks, with an opaque background under Reduce Transparency. Needs the macOS 26 SDK, so it is built in CI until the local toolchain is upgraded; how it looks is checked in M5.7.
 
 ## M4: Settings, onboarding and privacy
 
