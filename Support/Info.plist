@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Scripts/bundle.sh fills in CFBundleIdentifier, the version keys and LSMinimumSystemVersion. -->
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleLocalizations</key>
+  <array>
+    <string>en</string>
+  </array>
+  <key>CFBundleName</key>
+  <string>Spindle</string>
+  <key>CFBundleDisplayName</key>
+  <string>Spindle</string>
+  <key>CFBundleExecutable</key>
+  <string>Spindle</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.afshinghezeli.Spindle</string>
+  <key>CFBundleIconFile</key>
+  <string>AppIcon</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>0.0.0</string>
+  <key>CFBundleVersion</key>
+  <string>0</string>
+  <key>LSApplicationCategoryType</key>
+  <string>public.app-category.productivity</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>15.0</string>
+  <key>LSMultipleInstancesProhibited</key>
+  <true/>
+  <key>LSUIElement</key>
+  <true/>
+  <key>NSHumanReadableCopyright</key>
+  <string>Copyright © 2026 Afshin Ghezeli. Licensed under the GNU GPL v3.</string>
+  <key>NSSupportsAutomaticTermination</key>
+  <false/>
+  <key>NSSupportsSuddenTermination</key>
+  <false/>
+</dict>
+</plist>
