@@ -187,4 +187,49 @@ struct PanelModelTests {
         #expect(model.preview?.summary.id == first)
         #expect(model.preview?.text == "first line\nsecond line")
     }
+
+    // MARK: - Pins and deleting
+
+    @Test
+    func pinningMovesTheItemIntoThePinnedGroupAndKeepsItSelected() async throws {
+        for text in ["a", "b", "c"] { try await add(text) }
+        await model.reload()
+        model.moveSelection(by: 2)  // "a"
+        model.handle(.togglePin)
+        await model.pendingChange?.value
+        #expect(model.items.map(\.preview) == ["a", "c", "b"])
+        #expect(model.selectedItem?.preview == "a")
+        #expect(model.selectedItem?.isPinned == true)
+        model.handle(.togglePin)
+        await model.pendingChange?.value
+        #expect(model.items.map(\.preview) == ["c", "b", "a"])
+    }
+
+    @Test
+    func deletingSelectsTheNextItem() async throws {
+        for text in ["a", "b", "c"] { try await add(text) }
+        await model.reload()
+        model.moveSelection(by: 1)  // "b"
+        model.handle(.delete)
+        await model.pendingChange?.value
+        #expect(model.items.map(\.preview) == ["c", "a"])
+        #expect(model.selectedItem?.preview == "a")
+    }
+
+    @Test
+    func reorderingOnlyAppliesToPinnedItems() async throws {
+        let a = try await add("a")
+        let b = try await add("b")
+        try await pin(a)
+        try await pin(b)
+        await model.reload()
+        model.select(b)
+        #expect(model.handle(.movePinUp))
+        await model.pendingChange?.value
+        #expect(model.items.prefix(2).map(\.preview) == ["b", "a"])
+        try await add("loose")
+        await model.reload()
+        model.select(model.items.first { !$0.isPinned }?.id)
+        #expect(!model.handle(.movePinUp))
+    }
 }

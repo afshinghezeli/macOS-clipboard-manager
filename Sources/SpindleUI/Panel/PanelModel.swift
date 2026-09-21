@@ -50,6 +50,8 @@ public final class PanelModel {
     @ObservationIgnored public var onPaste: ((ItemSummary, PasteMode) -> Void)?
     /// Called when the panel should close.
     @ObservationIgnored public var onClose: (() -> Void)?
+    /// Called for ⌘K, to show the actions for the selected item.
+    @ObservationIgnored public var onShowActions: (() -> Void)?
 
     @ObservationIgnored let history: HistoryStore?
     @ObservationIgnored private let search: SearchEngine?
@@ -62,6 +64,7 @@ public final class PanelModel {
     @ObservationIgnored private(set) var searchTask: Task<Void, Never>?
     @ObservationIgnored private var lastSearchDuration: Duration = .zero
     @ObservationIgnored private(set) var previewTask: Task<Void, Never>?
+    @ObservationIgnored private(set) var pendingChange: Task<Void, Never>?
 
     /// - Parameters:
     ///   - history: `nil` gives an empty model, for snapshots and previews.
@@ -133,10 +136,38 @@ public final class PanelModel {
         case .quickPaste(let index): return choose(items.indices.contains(index) ? items[index] : nil, .paste)
         case .escape:
             if query.isEmpty { onClose?() } else { query = "" }
-        case .showActions, .togglePin, .delete, .nextFilter:
+        case .togglePin:
+            guard let item = selectedItem else { return false }
+            change { history in try await history.setPinned(item.id, !item.isPinned) }
+        case .movePinUp, .movePinDown:
+            guard let item = selectedItem, item.isPinned else { return false }
+            let offset = command == .movePinUp ? -1 : 1
+            change { history in try await history.movePin(item.id, by: offset) }
+        case .delete:
+            guard let item = selectedItem, let index = selectedIndex else { return false }
+            // Select the neighbour now, so the selection doesn't jump to the top after the reload.
+            let next = items.indices.contains(index + 1) ? items[index + 1].id : (index > 0 ? items[index - 1].id : nil)
+            selectedID = next
+            change { history in try await history.delete(item.id) }
+        case .showActions:
+            guard selectedItem != nil, let onShowActions else { return false }
+            onShowActions()
+        case .nextFilter:
             return false
         }
         return true
+    }
+
+    /// Runs a change to the history, then reloads the list and keeps the selection where it is.
+    private func change(_ operation: @escaping @Sendable (HistoryStore) async throws -> Void) {
+        guard let history else { return }
+        pendingChange = Task {
+            try? await operation(history)
+            let selected = selectedID
+            await reload()
+            if isSearching { queryChanged() }
+            if let selected, items.contains(where: { $0.id == selected }) { selectedID = selected }
+        }
     }
 
     private func choose(_ item: ItemSummary?, _ mode: PasteMode) -> Bool {

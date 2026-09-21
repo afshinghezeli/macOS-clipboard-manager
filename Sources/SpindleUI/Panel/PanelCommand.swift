@@ -15,6 +15,8 @@ public enum PanelCommand: Hashable, Sendable {
     case escape
     case showActions
     case togglePin
+    case movePinUp
+    case movePinDown
     case delete
     case nextFilter
 }
@@ -24,6 +26,13 @@ public enum PanelCommand: Hashable, Sendable {
 public enum PanelKeyMap {
     public static func command(forKeyEquivalent characters: String, modifiers: NSEvent.ModifierFlags) -> PanelCommand? {
         let modifiers = modifiers.intersection([.command, .shift, .option, .control])
+        if modifiers == [.command, .option] {
+            switch characters {
+            case String(UnicodeScalar(UInt16(NSUpArrowFunctionKey))!): return .movePinUp
+            case String(UnicodeScalar(UInt16(NSDownArrowFunctionKey))!): return .movePinDown
+            default: return nil
+            }
+        }
         guard modifiers == .command else { return nil }
         switch characters {
         case "\r": return .copy
