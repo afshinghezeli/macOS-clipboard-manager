@@ -52,7 +52,7 @@ clean: ## Remove build products
 DEBUG_APP := dist/debug/Spindle.app
 DEV_BUNDLE_ID := com.afshinghezeli.Spindle.dev
 
-.PHONY: app release package run stop logs verify-bundle setup-signing sparkle-keys reset-permissions
+.PHONY: app release package run stop logs verify-bundle setup-signing sparkle-keys icon reset-permissions
 
 app: ## Assemble and sign dist/debug/Spindle.app
 	Scripts/bundle.sh debug
@@ -84,6 +84,9 @@ sparkle-keys: ## Owner only, once: create the key that signs updates (docs/relea
 	.build/artifacts/sparkle/Sparkle/bin/generate_keys
 	.build/artifacts/sparkle/Sparkle/bin/generate_keys -p > Support/sparkle-public-key.txt
 	@echo "Wrote Support/sparkle-public-key.txt; commit it. The private key stays in your keychain."
+
+icon: ## Make Support/AppIcon.icns from a 1024 px PNG: make icon PNG=path/to/icon.png
+	Scripts/make-icon.sh "$(PNG)"
 
 reset-permissions: ## Forget the privacy permissions granted to the debug app
 	tccutil reset All $(DEV_BUNDLE_ID)
