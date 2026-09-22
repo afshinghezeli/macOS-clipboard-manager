@@ -67,7 +67,17 @@ public struct Pruner: Sendable {
     /// deleted text doesn't linger in free pages. Returns how many items were removed.
     @discardableResult
     public func clearHistory() async throws -> Int {
-        let removed = try await deleteInBatches(where: "1")
+        // Secure delete would search the whole search index for each item: 86 s for 100,000. With
+        // it off, deleting only marks index entries as gone, and rebuilding the index from what's
+        // left then drops every old entry at once, which erases the text just as surely.
+        let removed = try await database.write { db in
+            try db.execute(sql: "INSERT INTO item_fts(item_fts, rank) VALUES ('secure-delete', 0)")
+            try db.execute(sql: "DELETE FROM item WHERE pinned_rank IS NULL")
+            let removed = db.changesCount
+            try db.execute(sql: "INSERT INTO item_fts(item_fts) VALUES ('rebuild')")
+            try db.execute(sql: "INSERT INTO item_fts(item_fts, rank) VALUES ('secure-delete', 1)")
+            return removed
+        }
         // A short grace period still protects a copy being stored right now.
         _ = try await sweepFiles(olderThan: .now.addingTimeInterval(-60))
         try await database.writer.vacuum()

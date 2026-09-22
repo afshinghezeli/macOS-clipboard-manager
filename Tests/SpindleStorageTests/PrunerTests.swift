@@ -115,6 +115,32 @@ struct PrunerTests {
     }
 
     @Test
+    func clearingErasesTheTextFromTheSearchIndex() async throws {
+        try await database.writer.write { db in
+            for seq in 1...1_200 {
+                try db.execute(
+                    sql: """
+                        INSERT INTO item (seq, content_hash, kind, preview, search_text, byte_size, created_at, last_used_at)
+                        VALUES (?, randomblob(32), 0, '', ?, 1, 0, 0)
+                        """,
+                    arguments: [seq, seq == 1 ? "pinned recipe" : "secret note \(seq)"])
+            }
+        }
+        try pinOldest(1)
+        try await pruner.clearHistory()
+
+        try await database.writer.write { db in
+            try db.execute(sql: "INSERT INTO item_fts(item_fts, rank) VALUES ('integrity-check', 1)")
+            #expect(try Int64.fetchAll(db, sql: "SELECT rowid FROM item_fts WHERE item_fts MATCH '\"recipe\"'") == [1])
+            #expect(try Int64.fetchAll(db, sql: "SELECT rowid FROM item_fts WHERE item_fts MATCH '\"secret\"'").isEmpty)
+            // Only the pinned item's entries are left in the index: its averages and structure
+            // records plus a page or two, not 1,199 items marked as deleted.
+            #expect(try Int.fetchOne(db, sql: "SELECT count(*) FROM item_fts_data") ?? 0 <= 5)
+            #expect(try Int.fetchOne(db, sql: "SELECT v FROM item_fts_config WHERE k = 'secure-delete'") == 1)
+        }
+    }
+
+    @Test
     func clearingKeepsOnlyPinnedItems() async throws {
         try seed(1_200)
         try pinOldest(3)

@@ -75,6 +75,7 @@ Spindle records the clipboard reliably and safely, with no UI beyond the menu ba
 - [x] M2.4 Benchmarks with deterministic 10k and 100k histories, `make bench`, and measured numbers in performance.md.
 - [x] M2.5 Queries that mix long and short words ("git st") check the short words only among the 256 newest index matches of the long ones, so an older item containing all of them can be missed. Widen the window when too few candidates survive.
 - [x] M2.6 Ingest p99 is 4.5 ms at 100,000 items against a 2 ms budget, from rare spikes (median 0.12 ms). Find the cause (FTS5 segment merges or WAL checkpoints are the suspects) and fix it or revise the budget with the owner.
+- [ ] M2.7 Pruning many items at once is slow in a large history: FTS5's secure delete costs about 0.85 ms per item at 100,000 items, so removing 10,000 takes 8.5 s in 0.4 s batches, during which new copies wait. Clear History already avoids it (86 s to 2.1 s). For large prunes, delete without secure delete, then fully merge the index in small steps so the text is still erased.
 
 ## M3: Panel and paste
 
