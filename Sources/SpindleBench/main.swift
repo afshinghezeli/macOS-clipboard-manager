@@ -28,19 +28,26 @@ let vocabulary = [
     "let value =", "the quick brown fox", "budget", "Mon rendez-vous", "カレンダー", "func search(", "README", "error:",
 ]
 
-/// Builds a history of `count` items straight into the database, the way ingest would store them.
-func makeHistory(count: Int, in database: AppDatabase) async throws {
+/// The texts of a generated history, oldest first. The same count always gives the same texts.
+func historyTexts(count: Int) -> [String] {
     var random = SeededGenerator(seed: 42)
-    let blobs = BlobStore(directory: FileManager.default.temporaryDirectory.appending(path: "bench-blobs-\(count)"))
-    let ingestor = Ingestor(database: database, blobs: blobs)
-    let start = Date(timeIntervalSince1970: 1_780_000_000)
-    for index in 0..<count {
+    return (0..<count).map { index in
         var words: [String] = []
         for _ in 0..<Int.random(in: 3...14, using: &random) {
             words.append(vocabulary.randomElement(using: &random)!)
         }
         words.append("#\(index)")
-        let text = words.joined(separator: " ")
+        return words.joined(separator: " ")
+    }
+}
+
+/// Builds a history of `texts` straight into the database, the way ingest would store them.
+func makeHistory(_ texts: [String], in database: AppDatabase) async throws {
+    let blobs = BlobStore(
+        directory: FileManager.default.temporaryDirectory.appending(path: "bench-blobs-\(texts.count)"))
+    let ingestor = Ingestor(database: database, blobs: blobs)
+    let start = Date(timeIntervalSince1970: 1_780_000_000)
+    for (index, text) in texts.enumerated() {
         let item = CapturedItem(representations: [Representation(flavor: .plainText, data: Data(text.utf8))])
         try await ingestor.ingest(
             CapturedCopy(
@@ -82,8 +89,9 @@ for count in [10_000, 100_000] {
     defer { try? FileManager.default.removeItem(at: directory) }
     let database = try AppDatabase.open(at: StorageLocation(directory: directory))
 
+    let texts = historyTexts(count: count)
     let buildStart = ContinuousClock.now
-    try await makeHistory(count: count, in: database)
+    try await makeHistory(texts, in: database)
     let buildTime = ContinuousClock.now - buildStart
     print(
         "\n\(count) items (built in \(buildTime.formatted(.units(allowed: [.seconds], fractionalPart: .show(length: 1)))))"
@@ -117,4 +125,17 @@ for count in [10_000, 100_000] {
                 items: [item], declaredTypes: [.plainText], sourceBundleID: nil, changeCount: 0, capturedAt: .now))
     }
     print("  ingest one text copy  \(ingest.line)")
+
+    // Copying something from long ago again moves it to the top, which rewrites its index entry.
+    var old = 0
+    let bump = try await measure(200) {
+        old += 1
+        let item = CapturedItem(representations: [
+            Representation(flavor: .plainText, data: Data(texts[old * count / 250].utf8))
+        ])
+        try await ingestor.ingest(
+            CapturedCopy(
+                items: [item], declaredTypes: [.plainText], sourceBundleID: nil, changeCount: 0, capturedAt: .now))
+    }
+    print("  copy an old item again \(bump.line)")
 }
