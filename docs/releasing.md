@@ -41,6 +41,20 @@ The first release is 0.1.0. 1.0.0 comes once the update path has worked across r
 
 To rehearse steps 5 and 6 locally, run `make release package`. That signs with your development identity, and without `Support/sparkle-public-key.txt` the build doesn't update itself.
 
+## The first release
+
+Nothing proves the update path until one published version updates to the next, and a 0.1.0 that can't update strands everyone who installs it. So before merging the first release pull request:
+
+1. Finish the one-time setup below.
+2. Run the Beta workflow with `0.1.0-beta.1`, and enable Pages once it has created `gh-pages`.
+3. Install beta.1 from its DMG on a Mac that has never run Spindle. Turn on Settings → General → Include beta versions.
+4. Merge any commit to `main` (a build number only grows with the commit count), then run the Beta workflow with `0.1.0-beta.2`.
+5. In beta.1, choose Check for Updates… and install beta.2. Check that the history and the paste permission survived.
+
+Then merge the release pull request. 0.1.1 later confirms the same for the default channel (roadmap M5.8).
+
+If the Publish job fails after the release went public, run it again: it reuses the published files instead of rebuilding them, and skips what was already done. Don't start a beta while a release is publishing; the two share the appcast, and GitHub cancels a publish job that is still waiting when a third one queues.
+
 ## Betas
 
 Betas are published from the "Beta" workflow (Actions → Beta → Run workflow on `main`, version `X.Y.Z-beta.N`). They get a pre-release on GitHub, whose notes list the `feat`, `fix` and `perf` commits since the last tag, and an appcast entry on Sparkle's `beta` channel. Only people who turned on Settings → General → Include beta versions are offered them. Betas leave `version.txt` and `CHANGELOG.md` alone, and they never go to Homebrew.
@@ -63,13 +77,14 @@ These are GitHub settings, done once by the owner:
 
 - **Settings → General → Pull Requests:** allow squash merging only, with "Default commit message" set to "Pull request title". Turn on "Automatically delete head branches".
 - **Settings → Rules:** a ruleset for `main` that requires a pull request, linear history, and the `ci-ok` and `Conventional PR title` checks, and blocks force pushes and deletion.
-- **Release token:** create a GitHub App with Contents and Pull requests (read and write) on this repository. Store its client ID as the Actions variable `RELEASE_APP_CLIENT_ID` and its private key as the secret `RELEASE_APP_PRIVATE_KEY`. Without it, the release workflow falls back to `GITHUB_TOKEN`. That needs "Allow GitHub Actions to create and approve pull requests" under Settings → Actions, and CI won't run on the release PR.
+- **Release token:** create a GitHub App with Contents and Pull requests (read and write) on this repository. Store its client ID as the Actions variable `RELEASE_APP_CLIENT_ID` and its private key as the repository secret `RELEASE_APP_PRIVATE_KEY`. It must be a repository secret, not a `release` environment one, because release-please runs on every push to `main` outside that environment. Without it, the release workflow falls back to `GITHUB_TOKEN`. That needs "Allow GitHub Actions to create and approve pull requests" under Settings → Actions, and CI won't run on the release PR.
 - **Settings → Code security:** turn on private vulnerability reporting (SECURITY.md relies on it) and immutable releases.
 - **Settings → Environments:** a `release` environment that holds the secrets below. Under "Deployment branches and tags", allow only `main`: releases and betas are both built by workflows running on `main`.
 - **Release certificate:** run `Scripts/create-release-certificate.sh ~/somewhere-private` and follow what it prints. It creates the self-signed certificate that signs every release and stores it as `RELEASE_CERTIFICATE_P12` and `RELEASE_CERTIFICATE_PASSWORD`. Keep the `.p12` and its password in a password manager. macOS ties the paste permission to this certificate, so a release signed with another one makes everyone who updates grant the permission again.
-- **Update signing key:** run `make sparkle-keys`. It creates an EdDSA key pair in your login keychain and writes the public half to `Support/sparkle-public-key.txt`; commit that file. Export the private half with `.build/artifacts/sparkle/Sparkle/bin/generate_keys -x sparkle-private-key`, paste the file's contents into the `release` environment secret `SPARKLE_PRIVATE_KEY`, and delete the file. Keep a backup of the key somewhere safe: installed copies accept only updates signed with it, so losing it strands every user on their current version. Release builds made without `Support/sparkle-public-key.txt` don't update themselves, so the Publish job refuses to build one.
-- **Homebrew tap:** create the public repository `afshinghezeli/homebrew-tap`, install the release GitHub App on it, and set the Actions variable `HOMEBREW_TAP` to `homebrew-tap`. The Publish job then keeps `Casks/spindle.rb` there current, rendered from `Support/Homebrew/spindle.rb`. Without the variable, the job skips this step. The official Homebrew cask repository doesn't accept apps that fail Gatekeeper, so until there is a Developer ID the tap is the only way to install with `brew`.
-- **Settings → Pages:** after the first release has created the `gh-pages` branch, choose "Deploy from a branch", `gh-pages`, `/ (root)`. The appcast is then served at the `SUFeedURL` in `Support/Info.plist`. The Publish job warns when the feed doesn't show a new release within 10 minutes.
+- **Update signing key:** run `make sparkle-keys`. It creates an EdDSA key pair in your login keychain and writes the public half to `Support/sparkle-public-key.txt`; commit that file. Export the private half with `.build/artifacts/sparkle/Sparkle/bin/generate_keys -x sparkle-private-key`, paste the file's contents into the `release` environment secret `SPARKLE_PRIVATE_KEY`, and delete the file. `make check-sparkle-key` confirms the key in your keychain matches the committed public key, and the Publish job runs the same check with the secret before building anything. Keep a backup of the key somewhere safe: installed copies accept only updates signed with it, so losing it strands every user on their current version. Release builds made without `Support/sparkle-public-key.txt` don't update themselves, so the Publish job refuses to build one.
+- **Homebrew tap:** create the public repository `afshinghezeli/homebrew-tap` with a README, so it has a first commit to push onto; install the release GitHub App on it, and set the Actions variable `HOMEBREW_TAP` to `homebrew-tap`. The Publish job then keeps `Casks/spindle.rb` there current, rendered from `Support/Homebrew/spindle.rb`. Without the variable, the job skips this step. The official Homebrew cask repository doesn't accept apps that fail Gatekeeper, so until there is a Developer ID the tap is the only way to install with `brew`.
+- **Settings → Pages:** after the first beta has created the `gh-pages` branch, choose "Deploy from a branch", `gh-pages`, `/ (root)`. The appcast is then served at the `SUFeedURL` in `Support/Info.plist`. After each push, the Publish job asks for a Pages build and fails if the feed doesn't offer the new build within 10 minutes.
+- **Never rename the repository.** The feed URL contains its name, so installed copies would stop finding updates.
 
 ## Signing secrets
 

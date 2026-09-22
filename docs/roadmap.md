@@ -117,7 +117,7 @@ The core loop works end to end: shortcut, type, ↵, pasted.
 - [ ] M5.5 Homebrew tap. The cask template and the Publish step are done; the owner creates `afshinghezeli/homebrew-tap` (docs/releasing.md).
 - [x] M5.6 README with real screenshots, shortcuts table, privacy section, permissions FAQ and a short motivation. The screenshots are rendered from the app's views by `make screenshots`.
 - [ ] M5.7 Manual QA on macOS 15, 26 and 27: keyboard layouts, multiple displays, full-screen apps, common target apps.
-- [ ] M5.8 Ship 0.1.0, then 0.1.1 to prove the update path end to end.
+- [ ] M5.8 Rehearse with `0.1.0-beta.1` and `-beta.2` and update one to the other on a real Mac (docs/releasing.md, "The first release"), then ship 0.1.0, then 0.1.1 to prove the update path end to end.
 
 ## After 0.1
 
