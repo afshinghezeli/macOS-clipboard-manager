@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+  <channel>
+    <title>Spindle</title>
+    <link>https://github.com/afshinghezeli/spindle</link>
+    <description>Updates for Spindle, a clipboard history for macOS.</description>
+    <language>en</language>
+    <item>
+      <title>Spindle 0.1.0-beta.1</title>
+      <pubDate>Tue, 22 Sep 2026 18:20:46 GMT</pubDate>
+      <sparkle:version>128</sparkle:version>
+      <sparkle:shortVersionString>0.1.0-beta.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <sparkle:channel>beta</sparkle:channel>
+      <description>&lt;p&gt;A test version of what comes after the first release. Changes so far:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;feat(search): find items despite a typo when few match exactly&lt;/li&gt;
+&lt;li&gt;feat(updater): check for updates, with an opt-in beta channel&lt;/li&gt;
+&lt;li&gt;feat(import): bring over your history from Maccy&lt;/li&gt;
+&lt;li&gt;feat(onboarding): welcome new users with the shortcut and permissions&lt;/li&gt;
+&lt;li&gt;feat(privacy): explain when macOS blocks clipboard access&lt;/li&gt;
+&lt;li&gt;feat(privacy): pause for a while and set a shortcut to skip a copy&lt;/li&gt;
+&lt;li&gt;feat(settings): add a settings window&lt;/li&gt;
+&lt;li&gt;feat(history): clear the history from Settings&lt;/li&gt;
+&lt;li&gt;feat(panel): use Liquid Glass behind the panel on macOS 26&lt;/li&gt;
+&lt;li&gt;feat(menubar): click the menu bar icon to open Spindle&lt;/li&gt;
+&lt;li&gt;feat(panel): show only text, images, files, links or colors&lt;/li&gt;
+&lt;li&gt;feat(panel): list every action and its shortcut under ⌘K&lt;/li&gt;
+&lt;li&gt;feat(history): pin, reorder and delete items from the panel&lt;/li&gt;
+&lt;li&gt;feat(paste): paste the chosen item into the app you came from&lt;/li&gt;
+&lt;li&gt;feat(panel): preview the selected item next to the list&lt;/li&gt;
+&lt;li&gt;feat(search): find anything in your history as you type&lt;/li&gt;
+&lt;li&gt;feat(panel): list your clipboard history in the panel&lt;/li&gt;
+&lt;li&gt;feat(hotkey): open Spindle from anywhere with ⌃⌘V&lt;/li&gt;
+&lt;li&gt;feat(panel): open a floating history panel from the menu bar&lt;/li&gt;
+&lt;li&gt;feat(history): drop the oldest items once history passes 2 GB&lt;/li&gt;
+&lt;li&gt;feat(capture): keep a history of everything you copy&lt;/li&gt;
+&lt;li&gt;feat(menubar): show Spindle in the menu bar&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <enclosure url="https://github.com/afshinghezeli/spindle/releases/download/v0.1.0-beta.1/Spindle-0.1.0-beta.1.zip" length="4746278" type="application/octet-stream" sparkle:edSignature="3IjQklcPOQxIX+9kmwRcKT00e+XvxOD6Qs5gizYuSAaB0tkX26nyKTc49+nycB9w3U1GY0haVZWmXCspk9eGDw==" />
+    </item>
+  </channel>
+</rss>
