@@ -90,6 +90,18 @@ struct PanelSnapshotTests {
         }
     }
 
+    /// The README's screenshots; `make screenshots` copies them to docs/images.
+    @Test
+    func readmeScreenshots() async throws {
+        guard Snapshot.directory != nil else { return }
+        let model = try await sampleModel()
+        let notes = try #require(model.items.first { $0.preview.hasPrefix("Meeting notes") })
+        model.select(notes.id)
+        await model.previewTask?.value
+        try Snapshot.write(PanelView(model: model), named: "readme-panel-light", size: size)
+        try Snapshot.write(PanelView(model: model), named: "readme-panel-dark", size: size, appearance: .darkAqua)
+    }
+
     @Test
     func blockedClipboardBanner() async throws {
         guard Snapshot.directory != nil else { return }
