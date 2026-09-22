@@ -26,6 +26,7 @@ final class SettingsTests {
         #expect(settings.ignoredApps == CaptureFilter.defaultIgnoredApps)
         #expect(settings.keepsRemoteCopies)
         #expect(!settings.prefersPlainText)
+        #expect(!settings.receivesBetaUpdates)
         #expect(!settings.hasCompletedOnboarding)
         #expect(settings.ignoreNextCopyShortcut == nil)
     }
@@ -39,6 +40,7 @@ final class SettingsTests {
         settings.ignoredApps.insert("com.tinyspeck.slackmacgap")
         settings.keepsRemoteCopies = false
         settings.prefersPlainText = true
+        settings.receivesBetaUpdates = true
         settings.hasCompletedOnboarding = true
         settings.ignoreNextCopyShortcut = KeyboardShortcut(keyCode: 34, modifiers: [.control, .option, .command])
 
@@ -48,6 +50,7 @@ final class SettingsTests {
         #expect(reloaded.ignoredApps.contains("com.tinyspeck.slackmacgap"))
         #expect(!reloaded.keepsRemoteCopies)
         #expect(reloaded.prefersPlainText)
+        #expect(reloaded.receivesBetaUpdates)
         #expect(reloaded.hasCompletedOnboarding)
         #expect(reloaded.ignoreNextCopyShortcut == settings.ignoreNextCopyShortcut)
     }

@@ -12,15 +12,36 @@ public struct SettingsEnvironment {
     public var clearHistory: @MainActor () async -> Void
     /// Imports Maccy's history from the given folder; returns how many items came in.
     public var importFromMaccy: @MainActor (URL) async throws -> Int
+    /// `nil` hides the update settings, for builds that don't update themselves.
+    public var updates: UpdateControls?
 
     public init(
         pasteboardAccess: @escaping @MainActor () -> PasteboardAccess,
         clearHistory: @escaping @MainActor () async -> Void,
-        importFromMaccy: @escaping @MainActor (URL) async throws -> Int = { _ in 0 }
+        importFromMaccy: @escaping @MainActor (URL) async throws -> Int = { _ in 0 },
+        updates: UpdateControls? = nil
     ) {
         self.pasteboardAccess = pasteboardAccess
         self.clearHistory = clearHistory
         self.importFromMaccy = importFromMaccy
+        self.updates = updates
+    }
+}
+
+/// The update preferences the updater keeps itself.
+public struct UpdateControls {
+    public var automaticallyChecks: @MainActor () -> Bool
+    public var setAutomaticallyChecks: @MainActor (Bool) -> Void
+    public var checkNow: @MainActor () -> Void
+
+    public init(
+        automaticallyChecks: @escaping @MainActor () -> Bool,
+        setAutomaticallyChecks: @escaping @MainActor (Bool) -> Void,
+        checkNow: @escaping @MainActor () -> Void
+    ) {
+        self.automaticallyChecks = automaticallyChecks
+        self.setAutomaticallyChecks = setAutomaticallyChecks
+        self.checkNow = checkNow
     }
 }
 
@@ -31,7 +52,7 @@ struct SettingsView: View {
 
     var body: some View {
         TabView {
-            GeneralSettings(settings: settings)
+            GeneralSettings(settings: settings, updates: environment.updates)
                 .tabItem {
                     Label(
                         String(localized: "General", bundle: .spindleUI, comment: "Settings tab."),
@@ -61,6 +82,7 @@ struct SettingsView: View {
 
 struct GeneralSettings: View {
     @Bindable var settings: Settings
+    var updates: UpdateControls?
     @State private var launchState = LaunchAtLogin.state
     @State private var launchError: String?
 
@@ -117,6 +139,10 @@ struct GeneralSettings: View {
                 comment: "Settings: explains the plain text toggle."
             )
             .font(.caption).foregroundStyle(.secondary)
+
+            if let updates {
+                UpdateSettings(settings: settings, updates: updates)
+            }
         }
         .formStyle(.grouped)
     }
@@ -129,6 +155,45 @@ struct GeneralSettings: View {
             launchError = error.localizedDescription
         }
         launchState = LaunchAtLogin.state
+    }
+}
+
+/// Checking for updates is the only time Spindle's updater reaches the network, so it can be
+/// turned off here.
+struct UpdateSettings: View {
+    @Bindable var settings: Settings
+    var updates: UpdateControls
+    @State private var automaticallyChecks: Bool
+
+    init(settings: Settings, updates: UpdateControls) {
+        self.settings = settings
+        self.updates = updates
+        _automaticallyChecks = State(initialValue: updates.automaticallyChecks())
+    }
+
+    var body: some View {
+        Section(String(localized: "Updates", bundle: .spindleUI, comment: "Settings section.")) {
+            Toggle(
+                String(
+                    localized: "Check for updates automatically", bundle: .spindleUI,
+                    comment: "Settings toggle; checks once a day."),
+                isOn: Binding(
+                    get: { automaticallyChecks },
+                    set: {
+                        updates.setAutomaticallyChecks($0)
+                        automaticallyChecks = $0
+                    }))
+            Toggle(
+                String(
+                    localized: "Include beta versions", bundle: .spindleUI,
+                    comment: "Settings toggle; offers test versions as updates."),
+                isOn: $settings.receivesBetaUpdates)
+            Button(
+                String(localized: "Check Now", bundle: .spindleUI, comment: "Button: checks for updates.")
+            ) {
+                updates.checkNow()
+            }
+        }
     }
 }
 

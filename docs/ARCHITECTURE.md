@@ -136,7 +136,7 @@ Only `Sendable` values cross these boundaries. `NSImage`, `NSAttributedString` a
   - copies from ignored apps (Passwords, Keychain Access and the common password managers by default);
   - copies made while capture is paused.
 - Universal Clipboard items are captured only if the user allows it.
-- The app has **no network entitlement**. Update checks run in Sparkle's separate XPC service ([ADR 0002](adr/0002-ship-a-sandboxed-developer-id-app.md)).
+- The app has **no network entitlement**. Update checks run in Sparkle's separate XPC service ([ADR 0002](adr/0002-ship-a-sandboxed-developer-id-app.md)). Sparkle asks before its first automatic check, and Settings → General → Updates turns checking off. Debug builds, and release builds made without the update key, never check.
 - Logs never contain clipboard contents.
 - On macOS 15.4 and later, Spindle respects the pasteboard access setting. If macOS says to ask or deny, it stops reading in the background instead of triggering a stream of system prompts.
 

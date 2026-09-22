@@ -18,6 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var pruner: Pruner?
     private var maccyImporter: MaccyImporter?
     private let settings = Settings()
+    private lazy var updater = Updater(settings: settings)
     private var shortcutRegistration: UInt32?
     private var ignoreShortcutRegistration: UInt32?
     /// The app that was in front when the panel opened; pasting goes there.
@@ -67,6 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             logger.fault("Opening the history failed: \(error.localizedDescription, privacy: .public)")
         }
 
+        let updates = updater.controls
         statusItemController = StatusItemController(
             state: { [weak self] in
                 var state = StatusMenuState(
@@ -74,6 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     pausedUntil: self?.capture?.pausedUntil,
                     isSkippingNextCopy: self?.capture?.isSkippingNextCopy ?? false, openShortcut: self?.menuShortcut)
                 state.isClipboardBlocked = self?.capture?.restriction != nil
+                state.isUpdatePending = self?.updater.isUpdatePending ?? false
                 return state
             },
             actions: StatusMenuActions(
@@ -84,11 +87,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 pause: { [weak self] in self?.capture?.pause(for: $0) },
                 resume: { [weak self] in self?.capture?.resume() },
                 skipNextCopy: { [weak self] in self?.capture?.skipNextCopy() },
-                openSettings: { [weak self] in self?.openSettings() }))
+                openSettings: { [weak self] in self?.openSettings() },
+                checkForUpdates: updates?.checkNow))
+        updater.onPendingUpdateChange = { [weak self] in self?.statusItemController?.setShowsDot($0) }
         let environment = SettingsEnvironment(
             pasteboardAccess: { [weak self] in self?.gateway?.currentAccess ?? .allowed },
             clearHistory: { [weak self] in await self?.clearHistory() },
-            importFromMaccy: { [weak self] folder in try await self?.importFromMaccy(folder) ?? 0 })
+            importFromMaccy: { [weak self] folder in try await self?.importFromMaccy(folder) ?? 0 },
+            updates: updates)
         settingsWindow = SettingsWindowController(settings: settings, environment: environment)
         if !settings.hasCompletedOnboarding {
             let onboarding = OnboardingWindowController(settings: settings, environment: environment)

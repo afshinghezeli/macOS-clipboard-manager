@@ -13,6 +13,8 @@ public struct StatusMenuState {
     public var isClipboardBlocked = false
     /// The character and modifiers of the shortcut that opens the panel, shown next to "Open Spindle".
     public var openShortcut: (key: String, modifiers: NSEvent.ModifierFlags)?
+    /// An update was found in the background and the user hasn't looked at it yet.
+    public var isUpdatePending = false
 
     public init(
         itemCount: Int?, isPaused: Bool, pausedUntil: Date? = nil, isSkippingNextCopy: Bool = false,
@@ -35,19 +37,23 @@ public struct StatusMenuActions {
     public var skipNextCopy: @MainActor () -> Void
     /// `nil` hides "Settings…".
     public var openSettings: (@MainActor () -> Void)?
+    /// `nil` hides "Check for Updates…", for builds that don't update themselves.
+    public var checkForUpdates: (@MainActor () -> Void)?
 
     public init(
         togglePanel: @escaping @MainActor () -> Void,
         pause: @escaping @MainActor (TimeInterval?) -> Void,
         resume: @escaping @MainActor () -> Void,
         skipNextCopy: @escaping @MainActor () -> Void,
-        openSettings: (@MainActor () -> Void)? = nil
+        openSettings: (@MainActor () -> Void)? = nil,
+        checkForUpdates: (@MainActor () -> Void)? = nil
     ) {
         self.togglePanel = togglePanel
         self.pause = pause
         self.resume = resume
         self.skipNextCopy = skipNextCopy
         self.openSettings = openSettings
+        self.checkForUpdates = checkForUpdates
     }
 }
 
@@ -66,15 +72,42 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
         super.init()
         menu.delegate = self
         if let button = statusItem.button {
-            button.image = NSImage(
-                systemSymbolName: "list.clipboard",
-                accessibilityDescription: String(
-                    localized: "Clipboard history", bundle: .spindleUI,
-                    comment: "Accessibility description of the menu bar icon."))
+            button.image = Self.icon(withDot: false)
             button.target = self
             button.action = #selector(clicked(_:))
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
+    }
+
+    /// Adds a dot to the icon, or removes it. The dot means an update is waiting.
+    public func setShowsDot(_ showsDot: Bool) {
+        statusItem.button?.image = Self.icon(withDot: showsDot)
+    }
+
+    static func icon(withDot: Bool) -> NSImage? {
+        let description = String(
+            localized: "Clipboard history", bundle: .spindleUI,
+            comment: "Accessibility description of the menu bar icon.")
+        guard let symbol = NSImage(systemSymbolName: "list.clipboard", accessibilityDescription: description)
+        else { return nil }
+        guard withDot else { return symbol }
+        // A little wider than the symbol, so the dot sits beside the clip instead of on it.
+        let size = NSSize(width: symbol.size.width + 3, height: symbol.size.height)
+        let image = NSImage(size: size, flipped: false) { rect in
+            symbol.draw(in: NSRect(origin: .zero, size: symbol.size))
+            let dot = NSRect(x: rect.maxX - 5, y: rect.maxY - 5, width: 5, height: 5)
+            // Clear a ring around the dot, so it reads as a badge and not part of the symbol.
+            NSGraphicsContext.current?.compositingOperation = .clear
+            NSBezierPath(ovalIn: dot.insetBy(dx: -1, dy: -1)).fill()
+            NSGraphicsContext.current?.compositingOperation = .sourceOver
+            NSColor.black.setFill()
+            NSBezierPath(ovalIn: dot).fill()
+            return true
+        }
+        // A template image, so the dot follows the menu bar's color like the symbol does.
+        image.isTemplate = true
+        image.accessibilityDescription = description
+        return image
     }
 
     @objc private func clicked(_ sender: NSStatusBarButton) {
@@ -155,6 +188,16 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
         menu.addItem(skip)
 
         menu.addItem(.separator())
+        if actions.checkForUpdates != nil {
+            let title =
+                current.isUpdatePending
+                ? String(
+                    localized: "Update Available…", bundle: .spindleUI,
+                    comment: "Menu item; shows the update that was found.")
+                : String(
+                    localized: "Check for Updates…", bundle: .spindleUI, comment: "Menu item; asks Sparkle to check.")
+            menu.addItem(item(title, #selector(updatesChosen)))
+        }
         if actions.openSettings != nil {
             let settings = item(
                 String(localized: "Settings…", bundle: .spindleUI, comment: "Menu item; opens the settings window."),
@@ -188,6 +231,7 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
     ]
     @objc private func skipChosen() { actions.skipNextCopy() }
     @objc private func settingsChosen() { actions.openSettings?() }
+    @objc private func updatesChosen() { actions.checkForUpdates?() }
 
     private static func countTitle(_ count: Int?) -> String {
         guard let count else {

@@ -30,6 +30,10 @@ public final class Settings {
     public var prefersPlainText: Bool {
         didSet { defaults.set(prefersPlainText, forKey: Key.prefersPlainText) }
     }
+    /// Offer beta versions as updates, not only releases.
+    public var receivesBetaUpdates: Bool {
+        didSet { defaults.set(receivesBetaUpdates, forKey: Key.receivesBetaUpdates) }
+    }
     public var hasCompletedOnboarding: Bool {
         didSet { defaults.set(hasCompletedOnboarding, forKey: Key.onboardingCompleted) }
     }
@@ -46,6 +50,7 @@ public final class Settings {
             ?? CaptureFilter.defaultIgnoredApps
         keepsRemoteCopies = defaults.object(forKey: Key.keepsRemoteCopies) as? Bool ?? true
         prefersPlainText = defaults.bool(forKey: Key.prefersPlainText)
+        receivesBetaUpdates = defaults.bool(forKey: Key.receivesBetaUpdates)
         hasCompletedOnboarding = defaults.bool(forKey: Key.onboardingCompleted)
     }
 
@@ -61,6 +66,7 @@ public final class Settings {
         static let ignoredApps = "ignoredApps"
         static let keepsRemoteCopies = "keepsRemoteCopies"
         static let prefersPlainText = "prefersPlainText"
+        static let receivesBetaUpdates = "receivesBetaUpdates"
         static let onboardingCompleted = "onboardingCompleted"
     }
 

@@ -189,3 +189,21 @@
 
 /* Importing from Maccy failed; followed by the reason. */
 "The import failed: %@" = "The import failed: %@";
+
+/* Menu item; asks Sparkle to check. */
+"Check for Updates…" = "Check for Updates…";
+
+/* Settings section. */
+"Updates" = "Updates";
+
+/* Settings toggle; checks once a day. */
+"Check for updates automatically" = "Check for updates automatically";
+
+/* Settings toggle; offers test versions as updates. */
+"Include beta versions" = "Include beta versions";
+
+/* Button: checks for updates. */
+"Check Now" = "Check Now";
+
+/* Menu item; shows the update that was found. */
+"Update Available…" = "Update Available…";
