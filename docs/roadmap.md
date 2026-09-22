@@ -114,7 +114,7 @@ The core loop works end to end: shortcut, type, ↵, pasted.
 - [x] M5.3 Release signing with a stable self-signed certificate held in CI secrets ([ADR 0007](adr/0007-sign-releases-with-a-self-signed-certificate-for-now.md)), with Developer ID and notarization ready to switch on later.
 - [x] M5.4 Release workflow: universal build, sign, notarize (once there is a Developer ID), DMG and ZIP, appcast, publish the draft release. Betas from a manual workflow.
 - [ ] M5.5 Homebrew tap. The cask template and the Publish step are done; the owner creates `afshinghezeli/homebrew-tap` (docs/releasing.md).
-- [ ] M5.6 README with real screenshots, shortcuts table, privacy section, permissions FAQ and a short motivation.
+- [x] M5.6 README with real screenshots, shortcuts table, privacy section, permissions FAQ and a short motivation. The screenshots are rendered from the app's views by `make screenshots`.
 - [ ] M5.7 Manual QA on macOS 15, 26 and 27: keyboard layouts, multiple displays, full-screen apps, common target apps.
 - [ ] M5.8 Ship 0.1.0, then 0.1.1 to prove the update path end to end.
 
