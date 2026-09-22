@@ -62,6 +62,7 @@ These are GitHub settings, done once by the owner:
 - **Release token:** create a GitHub App with Contents and Pull requests (read and write) on this repository. Store its client ID as the Actions variable `RELEASE_APP_CLIENT_ID` and its private key as the secret `RELEASE_APP_PRIVATE_KEY`. Without it, the release workflow falls back to `GITHUB_TOKEN`. That needs "Allow GitHub Actions to create and approve pull requests" under Settings → Actions, and CI won't run on the release PR.
 - **Settings → Code security:** turn on private vulnerability reporting (SECURITY.md relies on it) and immutable releases.
 - **Settings → Environments:** a `release` environment that holds the signing secrets, limited to tags matching `v*`.
+- **Update signing key:** run `make sparkle-keys`. It creates an EdDSA key pair in your login keychain and writes the public half to `Support/sparkle-public-key.txt`; commit that file. Export the private half with `.build/artifacts/sparkle/Sparkle/bin/generate_keys -x sparkle-private-key`, paste the file's contents into the `release` environment secret `SPARKLE_PRIVATE_KEY`, and delete the file. Keep a backup of the key somewhere safe: installed copies accept only updates signed with it, so losing it strands every user on their current version. Release builds made without `Support/sparkle-public-key.txt` don't update themselves.
 
 ## Signing secrets
 

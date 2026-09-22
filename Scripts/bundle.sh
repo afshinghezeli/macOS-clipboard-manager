@@ -76,7 +76,8 @@ executable="$contents/MacOS/$product"
 lipo -create "$slices"/*/"$product" -output "$executable"
 
 # SwiftPM leaves absolute build-machine rpaths (the toolchain's Testing.framework directory)
-# in the binary. They are useless on other Macs, so drop everything that isn't relative.
+# in the binary. They are useless on other Macs, so drop everything that isn't relative. The
+# relative one to Contents/Frameworks comes from Package.swift and is where Sparkle lives.
 while IFS= read -r rpath; do
     [[ -z "$rpath" || "$rpath" == @* ]] && continue
     install_name_tool -delete_rpath "$rpath" "$executable"
@@ -88,11 +89,25 @@ cp Support/Info.plist "$plist"
 plutil -replace CFBundleIdentifier -string "$bundle_id" "$plist"
 plutil -replace CFBundleShortVersionString -string "$version" "$plist"
 plutil -replace CFBundleVersion -string "$build_number" "$plist"
-[[ "$configuration" == debug ]] && plutil -replace CFBundleDisplayName -string "$product Dev" "$plist"
+if [[ "$configuration" == debug ]]; then
+    plutil -replace CFBundleDisplayName -string "$product Dev" "$plist"
+fi
+# Updates only with a public key to check them against, and never for debug builds.
+if [[ "$configuration" == release && -s Support/sparkle-public-key.txt ]]; then
+    plutil -replace SUPublicEDKey -string "$(tr -d '[:space:]' < Support/sparkle-public-key.txt)" "$plist"
+else
+    plutil -remove SUFeedURL "$plist"
+fi
 plutil -lint "$plist" > /dev/null
 printf 'APPL????' > "$contents/PkgInfo"
 
 [[ -f Support/AppIcon.icns ]] && cp Support/AppIcon.icns "$contents/Resources/"
+
+# Sparkle.framework, with the XPC services a sandboxed app needs. ditto keeps its symlinks.
+if [[ -d "$first_bin/Sparkle.framework" ]]; then
+    mkdir -p "$contents/Frameworks"
+    ditto "$first_bin/Sparkle.framework" "$contents/Frameworks/Sparkle.framework"
+fi
 
 # SwiftPM resource bundles go in Contents/Resources. Never the bundle root: codesign rejects
 # "unsealed contents present in the bundle root".
@@ -107,7 +122,18 @@ shopt -u nullglob
 # xattr need to write to them.
 chmod -R u+w "$app"
 xattr -cr "$app"
-"${sign[@]}" --entitlements Support/Spindle.entitlements "$app"
+# Inside out, never --deep (Sparkle's sandboxing guide).
+sparkle="$contents/Frameworks/Sparkle.framework"
+if [[ -d "$sparkle" ]]; then
+    "${sign[@]}" "$sparkle/Versions/B/XPCServices/Installer.xpc"
+    "${sign[@]}" --preserve-metadata=entitlements "$sparkle/Versions/B/XPCServices/Downloader.xpc"
+    "${sign[@]}" "$sparkle/Versions/B/Autoupdate"
+    "${sign[@]}" "$sparkle/Versions/B/Updater.app"
+    "${sign[@]}" "$sparkle"
+fi
+entitlements="$root/.build/Spindle-$configuration.entitlements"
+sed "s/\$(PRODUCT_BUNDLE_IDENTIFIER)/$bundle_id/g" Support/Spindle.entitlements > "$entitlements"
+"${sign[@]}" --entitlements "$entitlements" "$app"
 codesign --verify --strict "$app"
 
 echo "==> $app"

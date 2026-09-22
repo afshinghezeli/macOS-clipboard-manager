@@ -45,7 +45,7 @@ clean: ## Remove build products
 DEBUG_APP := dist/debug/Spindle.app
 DEV_BUNDLE_ID := com.afshinghezeli.Spindle.dev
 
-.PHONY: app release run stop logs verify-bundle setup-signing reset-permissions
+.PHONY: app release run stop logs verify-bundle setup-signing sparkle-keys reset-permissions
 
 app: ## Assemble and sign dist/debug/Spindle.app
 	Scripts/bundle.sh debug
@@ -67,6 +67,13 @@ verify-bundle: ## Check the debug app's signature and resources as another Mac w
 
 setup-signing: ## One-time: create the local signing identity so permissions survive rebuilds
 	Scripts/setup-dev-signing.sh
+
+sparkle-keys: ## Owner only, once: create the key that signs updates (docs/releasing.md)
+	swift package resolve
+	@# Creates the key in the login keychain, or shows the existing one.
+	.build/artifacts/sparkle/Sparkle/bin/generate_keys
+	.build/artifacts/sparkle/Sparkle/bin/generate_keys -p > Support/sparkle-public-key.txt
+	@echo "Wrote Support/sparkle-public-key.txt; commit it. The private key stays in your keychain."
 
 reset-permissions: ## Forget the privacy permissions granted to the debug app
 	tccutil reset All $(DEV_BUNDLE_ID)

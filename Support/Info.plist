@@ -41,5 +41,14 @@
   <false/>
   <key>NSSupportsSuddenTermination</key>
   <false/>
+  <!-- Sparkle (ADR 0002). Spindle is sandboxed without network access, so Sparkle's own XPC
+       services install and download updates. SUPublicEDKey is added by Scripts/bundle.sh from
+       Support/sparkle-public-key.txt; without it the build doesn't check for updates. -->
+  <key>SUFeedURL</key>
+  <string>https://afshinghezeli.github.io/macOS-clipboard-manager/appcast.xml</string>
+  <key>SUEnableInstallerLauncherService</key>
+  <true/>
+  <key>SUEnableDownloaderService</key>
+  <true/>
 </dict>
 </plist>

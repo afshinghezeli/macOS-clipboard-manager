@@ -18,13 +18,20 @@ let package = Package(
     ],
     dependencies: [
         // Pinned exactly: upgrades are deliberate, and must keep building with Swift 6.1 (ADR 0003).
-        .package(url: "https://github.com/groue/GRDB.swift", exact: "7.11.1")
+        .package(url: "https://github.com/groue/GRDB.swift", exact: "7.11.1"),
+        // Updates for builds distributed outside the Mac App Store (ADR 0002).
+        .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.10.0"),
     ],
     targets: [
         .executableTarget(
             name: "Spindle",
-            dependencies: ["SpindleCore", "SpindleStorage", "SpindleSystem", "SpindleUI"],
-            swiftSettings: swiftSettings
+            dependencies: [
+                "SpindleCore", "SpindleStorage", "SpindleSystem", "SpindleUI",
+                .product(name: "Sparkle", package: "Sparkle"),
+            ],
+            swiftSettings: swiftSettings,
+            // Sparkle.framework is embedded in Spindle.app/Contents/Frameworks.
+            linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]
         ),
         .target(
             name: "SpindleCore",
