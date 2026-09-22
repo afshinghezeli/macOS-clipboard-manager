@@ -45,13 +45,16 @@ clean: ## Remove build products
 DEBUG_APP := dist/debug/Spindle.app
 DEV_BUNDLE_ID := com.afshinghezeli.Spindle.dev
 
-.PHONY: app release run stop logs verify-bundle setup-signing sparkle-keys reset-permissions
+.PHONY: app release package run stop logs verify-bundle setup-signing sparkle-keys reset-permissions
 
 app: ## Assemble and sign dist/debug/Spindle.app
 	Scripts/bundle.sh debug
 
 release: ## Assemble dist/release/Spindle.app, universal unless ARCHES is set
 	ARCHES="$${ARCHES:-arm64 x86_64}" Scripts/bundle.sh release
+
+package: ## Make the ZIP, DMG and dSYM archives from the release app
+	Scripts/package.sh
 
 run: stop app ## Rebuild and relaunch the debug app
 	open "$(DEBUG_APP)"
@@ -62,8 +65,8 @@ stop: ## Quit the running debug app
 logs: ## Stream the debug app's log messages
 	/usr/bin/log stream --style compact --level debug --predicate 'subsystem == "$(DEV_BUNDLE_ID)"'
 
-verify-bundle: ## Check the debug app's signature and resources as another Mac would see them
-	Scripts/verify-bundle.sh "$(DEBUG_APP)"
+verify-bundle: ## Check an app's signature and resources as another Mac would; APP=… for another bundle
+	Scripts/verify-bundle.sh "$${APP:-$(DEBUG_APP)}"
 
 setup-signing: ## One-time: create the local signing identity so permissions survive rebuilds
 	Scripts/setup-dev-signing.sh

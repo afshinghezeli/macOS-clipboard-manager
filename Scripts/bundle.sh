@@ -8,6 +8,10 @@
 #   SIGN_IDENTITY   "Developer ID Application: …", a certificate SHA-1, or "-" for ad hoc.
 #                   Default: the identity from `make setup-signing`, else ad hoc.
 #   SWIFT_FLAGS     Extra flags for `swift build`.
+#   VERSION         The version to write into Info.plist. Default: version.txt. Betas set it.
+#   HARDENED_RUNTIME
+#                   1 signs with the hardened runtime and a secure timestamp, as notarization
+#                   needs. Default: on for a "Developer ID Application: …" identity name.
 #
 # Debug builds get the bundle id suffix ".dev" so they never share settings, history or
 # permissions with an installed release.
@@ -25,7 +29,7 @@ cd "$root"
 product="Spindle"
 bundle_id="com.afshinghezeli.Spindle"
 [[ "$configuration" == debug ]] && bundle_id="$bundle_id.dev"
-version="$(tr -d '[:space:]' < version.txt)"
+version="${VERSION:-$(tr -d '[:space:]' < version.txt)}"
 build_number="$(git rev-list --count HEAD 2>/dev/null || echo 0)"
 arches="${ARCHES:-$(uname -m)}"
 app="$root/dist/$configuration/$product.app"
@@ -46,7 +50,7 @@ if [[ -z "${SIGN_IDENTITY:-}" ]]; then
     fi
 fi
 sign=(codesign --force --sign "$SIGN_IDENTITY")
-if [[ "$SIGN_IDENTITY" == "Developer ID Application:"* ]]; then
+if [[ "${HARDENED_RUNTIME:-}" == 1 || "$SIGN_IDENTITY" == "Developer ID Application:"* ]]; then
     # Notarization needs the hardened runtime and a secure timestamp. Only use them with a real
     # team ID: library validation rejects self-signed and ad-hoc signed frameworks.
     sign+=(--options runtime --timestamp)
@@ -59,10 +63,14 @@ slices="$root/.build/slices/$configuration"
 rm -rf "$slices"
 first_bin=""
 for arch in $arches; do
-    echo "==> swift build -c $configuration --arch $arch"
+    flags=(-c "$configuration" --arch "$arch")
+    # SwiftPM 6.1 sometimes fails with "No target named … in build description" when one build
+    # directory alternates between architectures, so a universal build gives each its own.
+    [[ "$arches" == *" "* ]] && flags+=(--scratch-path "$root/.build/universal/$arch")
+    echo "==> swift build ${flags[*]}"
     # shellcheck disable=SC2086
-    swift build -c "$configuration" --arch "$arch" --product "$product" ${SWIFT_FLAGS:-}
-    bin="$(swift build -c "$configuration" --arch "$arch" --show-bin-path)"
+    swift build "${flags[@]}" --product "$product" ${SWIFT_FLAGS:-}
+    bin="$(swift build "${flags[@]}" --show-bin-path)"
     mkdir -p "$slices/$arch"
     cp "$bin/$product" "$slices/$arch/"
     [[ -n "$first_bin" ]] || first_bin="$bin"
@@ -81,8 +89,13 @@ lipo -create "$slices"/*/"$product" -output "$executable"
 while IFS= read -r rpath; do
     [[ -z "$rpath" || "$rpath" == @* ]] && continue
     install_name_tool -delete_rpath "$rpath" "$executable"
-done < <(otool -l "$executable" | awk '/cmd LC_RPATH/ { getline; getline; print $2 }')
-[[ "$configuration" == release ]] && strip -x "$executable"
+done < <(otool -l "$executable" | awk '/cmd LC_RPATH/ { getline; getline; print $2 }' | sort -u)  # once per slice
+if [[ "$configuration" == release ]]; then
+    # Symbols for reading crash reports, taken before stripping them from the app.
+    rm -rf "$app.dSYM"
+    dsymutil "$executable" -o "$app.dSYM"
+    strip -x "$executable"
+fi
 
 plist="$contents/Info.plist"
 cp Support/Info.plist "$plist"
