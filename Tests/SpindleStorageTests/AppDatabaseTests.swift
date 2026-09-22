@@ -48,34 +48,42 @@ struct AppDatabaseTests {
         }
     }
 
+    /// Whether every frame in the WAL has been copied into the database. The wal-index keeps the
+    /// number of frames at byte 16 and the number copied at byte 96 (sqlite.org/walformat.html).
+    private func isCheckpointed(_ location: StorageLocation) throws -> Bool {
+        let shm = URL(filePath: location.databaseURL.path(percentEncoded: false) + "-shm")
+        let header = try Data(contentsOf: shm).prefix(100)
+        let (frames, copied) = header.withUnsafeBytes {
+            (
+                $0.loadUnaligned(fromByteOffset: 16, as: UInt32.self),
+                $0.loadUnaligned(fromByteOffset: 96, as: UInt32.self)
+            )
+        }
+        return frames > 0 && copied == frames
+    }
+
+    private func temporaryLocation() -> StorageLocation {
+        StorageLocation(
+            directory: FileManager.default.temporaryDirectory.appending(path: "spindle-wal-\(UUID().uuidString)"))
+    }
+
+    @Test
+    func writesDoNotCheckpointTheWAL() async throws {
+        let location = temporaryLocation()
+        defer { try? FileManager.default.removeItem(at: location.directory) }
+        let database = try AppDatabase.open(at: location, checkpointDelay: .seconds(3600))
+        try await database.write { db in try insertItem(db, id: 1, seq: 1, text: "one") }
+        #expect(try !isCheckpointed(location))
+    }
+
     @Test
     func checkpointsTheWALOnceWritesStop() async throws {
-        let directory = FileManager.default.temporaryDirectory.appending(path: "spindle-wal-\(UUID().uuidString)")
-        defer { try? FileManager.default.removeItem(at: directory) }
-        let location = StorageLocation(directory: directory)
-        let database = try AppDatabase.open(at: location)
+        let location = temporaryLocation()
+        defer { try? FileManager.default.removeItem(at: location.directory) }
+        let database = try AppDatabase.open(at: location, checkpointDelay: .zero)
         try await database.write { db in try insertItem(db, id: 1, seq: 1, text: "one") }
-
-        // The wal-index keeps the number of frames in the WAL at byte 16 and the number already
-        // copied into the database at byte 96 (sqlite.org/walformat.html).
-        let shm = URL(filePath: location.databaseURL.path(percentEncoded: false) + "-shm")
-        func isCheckpointed() throws -> Bool {
-            let header = try Data(contentsOf: shm).prefix(100)
-            let (frames, copied) = header.withUnsafeBytes {
-                (
-                    $0.loadUnaligned(fromByteOffset: 16, as: UInt32.self),
-                    $0.loadUnaligned(fromByteOffset: 96, as: UInt32.self)
-                )
-            }
-            return frames > 0 && copied == frames
-        }
-        #expect(try !isCheckpointed())
-        var waited = 0
-        while try !isCheckpointed(), waited < 40 {
-            try await Task.sleep(for: .milliseconds(100))
-            waited += 1
-        }
-        #expect(try isCheckpointed())
+        await database.checkpointed()
+        #expect(try isCheckpointed(location))
     }
 
     @Test

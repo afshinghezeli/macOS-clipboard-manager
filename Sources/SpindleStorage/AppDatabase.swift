@@ -8,11 +8,17 @@ import Synchronization
 /// database pool (one writer, two readers); tests use an in-memory queue.
 public final class AppDatabase: Sendable {
     let writer: any DatabaseWriter
-    private let checkpoints = CheckpointScheduler()
+    private let checkpoints: CheckpointScheduler
 
-    init(_ writer: any DatabaseWriter) throws {
+    init(_ writer: any DatabaseWriter, checkpointDelay: Duration = .seconds(1)) throws {
         self.writer = writer
+        checkpoints = CheckpointScheduler(delay: checkpointDelay)
         try Self.migrator.migrate(writer)
+    }
+
+    /// Waits for a scheduled checkpoint to finish; for tests.
+    func checkpointed() async {
+        await checkpoints.pending()
     }
 
     /// Runs `updates` in a write transaction. All writes go through here or
@@ -29,6 +35,10 @@ public final class AppDatabase: Sendable {
 
     /// Opens (or creates) the database at `location`.
     public static func open(at location: StorageLocation) throws -> AppDatabase {
+        try open(at: location, checkpointDelay: .seconds(1))
+    }
+
+    static func open(at location: StorageLocation, checkpointDelay: Duration) throws -> AppDatabase {
         try FileManager.default.createDirectory(at: location.directory, withIntermediateDirectories: true)
         var configuration = Configuration()
         // Every reader connection keeps its own page cache, so the count bounds memory.
@@ -55,7 +65,7 @@ public final class AppDatabase: Sendable {
         }
         let pool = try DatabasePool(
             path: location.databaseURL.path(percentEncoded: false), configuration: configuration)
-        return try AppDatabase(pool)
+        return try AppDatabase(pool, checkpointDelay: checkpointDelay)
     }
 
     /// A private, empty database for tests and previews.
@@ -79,14 +89,18 @@ public final class AppDatabase: Sendable {
 /// Checkpoints the WAL a second after the last write, as its own step on the writer's queue, so no
 /// single write pays for it. Nothing runs while nothing is written.
 final class CheckpointScheduler: Sendable {
-    private static let delay: Duration = .seconds(1)
-    private let pending = Mutex<Task<Void, Never>?>(nil)
+    private let delay: Duration
+    private let task = Mutex<Task<Void, Never>?>(nil)
+
+    init(delay: Duration) {
+        self.delay = delay
+    }
 
     func schedule(_ writer: any DatabaseWriter) {
-        pending.withLock { task in
+        task.withLock { task in
             task?.cancel()
-            task = Task.detached(priority: .utility) {
-                try? await Task.sleep(for: Self.delay)
+            task = Task.detached(priority: .utility) { [delay] in
+                try? await Task.sleep(for: delay)
                 guard !Task.isCancelled else { return }
                 // PASSIVE never waits for readers; what it can't copy yet waits for the next one.
                 _ = try? await writer.writeWithoutTransaction { db in
@@ -94,5 +108,9 @@ final class CheckpointScheduler: Sendable {
                 }
             }
         }
+    }
+
+    func pending() async {
+        await task.withLock { $0 }?.value
     }
 }
