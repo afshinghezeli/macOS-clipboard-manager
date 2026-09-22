@@ -1,7 +1,8 @@
 name: Publish
 
 # Builds, signs and publishes one version of Spindle: the universal app, its ZIP (for Sparkle),
-# DMG (for people and Homebrew) and dSYMs, then the appcast entry that offers it as an update.
+# DMG (for people and Homebrew) and dSYMs, the appcast entry that offers it as an update, and
+# for releases the Homebrew cask.
 # release-please.yml calls this once a release pull request is merged, and beta.yml for betas.
 # docs/releasing.md describes the whole process and the secrets it needs.
 on:
@@ -158,6 +159,32 @@ jobs:
             sleep 10
           done
           echo "::warning::$feed doesn't offer build $build after 10 minutes. Is GitHub Pages publishing the gh-pages branch?"
+
+      # Releases only, once the tap exists: the repository variable HOMEBREW_TAP names it (for
+      # example homebrew-tap), and the release GitHub App is installed on it.
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: tap-token
+        if: inputs.channel == '' && vars.HOMEBREW_TAP != '' && vars.RELEASE_APP_CLIENT_ID != ''
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ vars.HOMEBREW_TAP }}
+
+      - name: Update the Homebrew cask
+        if: steps.tap-token.outputs.token != ''
+        env:
+          TAP: ${{ github.repository_owner }}/${{ vars.HOMEBREW_TAP }}
+          TAP_TOKEN: ${{ steps.tap-token.outputs.token }}
+        run: |
+          git clone --quiet --depth 1 "https://x-access-token:$TAP_TOKEN@github.com/$TAP.git" dist/tap
+          Scripts/update-cask.sh "$VERSION" "dist/Spindle-$VERSION.dmg" dist/tap
+          cd dist/tap
+          git add Casks/spindle.rb
+          git -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit --quiet --message "spindle $VERSION"
+          git push --quiet
 
       - name: Remove the signing keychain
         if: always()
