@@ -1,7 +1,8 @@
 name: Release Please
 
 # Keeps a "chore: release X.Y.Z" pull request up to date with the changelog and version.txt.
-# Merging it tags the release and creates a draft GitHub release (docs/releasing.md).
+# Merging it tags the release, creates a draft GitHub release, and release.yml builds and
+# publishes it (docs/releasing.md).
 on:
   push:
     branches: [main]
@@ -21,6 +22,8 @@ jobs:
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+      sha: ${{ steps.release.outputs.sha }}
     steps:
       # Pull requests opened with GITHUB_TOKEN don't trigger CI, so the release PR could never
       # pass its required checks. A GitHub App token avoids that once the app is configured.
@@ -36,3 +39,16 @@ jobs:
           token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  publish:
+    name: Publish
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.release-please.outputs.tag_name }}
+      version: ${{ needs.release-please.outputs.version }}
+      sha: ${{ needs.release-please.outputs.sha }}
+    secrets: inherit

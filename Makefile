@@ -33,6 +33,7 @@ format: ## Apply formatting
 check: lint ## Lint, build with warnings as errors, and test (run before every commit)
 	swift build --build-tests $(STRICT)
 	swift test --skip-build
+	python3 -m unittest discover --start-directory Scripts/tests
 
 bench: ## Time search, paging and ingest at 10,000 and 100,000 items (release build)
 	swift run -c release SpindleBench

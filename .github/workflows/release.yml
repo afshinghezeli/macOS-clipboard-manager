@@ -1,0 +1,164 @@
+name: Publish
+
+# Builds, signs and publishes one version of Spindle: the universal app, its ZIP (for Sparkle),
+# DMG (for people and Homebrew) and dSYMs, then the appcast entry that offers it as an update.
+# release-please.yml calls this once a release pull request is merged, and beta.yml for betas.
+# docs/releasing.md describes the whole process and the secrets it needs.
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: The release's tag, e.g. v1.2.3.
+        required: true
+        type: string
+      version:
+        description: The version without the v, e.g. 1.2.3 or 1.3.0-beta.1.
+        required: true
+        type: string
+      sha:
+        description: The commit to build.
+        required: true
+        type: string
+      channel:
+        description: The Sparkle channel; "beta" for betas, empty for releases.
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Build, sign and publish
+    runs-on: macos-15
+    timeout-minutes: 60
+    environment: release
+    permissions:
+      contents: write # upload to and publish the release, push the appcast
+    # One appcast: publishing a beta and a release at once would lose one of the entries.
+    concurrency:
+      group: publish-appcast
+      cancel-in-progress: false
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ inputs.tag }}
+      VERSION: ${{ inputs.version }}
+      CHANNEL: ${{ inputs.channel }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.sha }}
+          fetch-depth: 0 # the build number is the commit count
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .build/artifacts
+            .build/checkouts
+            .build/repositories
+          key: spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Check the inputs
+        run: |
+          if [[ -z "$CHANNEL" && "$(tr -d '[:space:]' < version.txt)" != "$VERSION" ]]; then
+            echo "::error::version.txt says $(cat version.txt), but the release is $VERSION."
+            exit 1
+          fi
+          if [[ ! -s Support/sparkle-public-key.txt ]]; then
+            echo "::error::Support/sparkle-public-key.txt is missing, so this build couldn't update itself. Run make sparkle-keys (docs/releasing.md)."
+            exit 1
+          fi
+
+      - name: Import the signing certificate
+        id: certificate
+        env:
+          CERTIFICATE_P12: ${{ secrets.RELEASE_CERTIFICATE_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.RELEASE_CERTIFICATE_PASSWORD }}
+        run: Scripts/import-certificate.sh > /dev/null
+
+      - name: Build the universal app
+        env:
+          SIGN_IDENTITY: ${{ steps.certificate.outputs.identity }}
+        run: |
+          make release
+          make verify-bundle APP=dist/release/Spindle.app
+
+      - name: Notarize the app
+        if: steps.certificate.outputs.developer-id == 'true'
+        env:
+          NOTARY_KEY: ${{ secrets.NOTARY_KEY }}
+          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+        run: Scripts/notarize.sh dist/release/Spindle.app
+
+      - name: Package
+        run: make package
+
+      - name: Sign and notarize the disk image
+        if: steps.certificate.outputs.developer-id == 'true'
+        env:
+          SIGN_IDENTITY: ${{ steps.certificate.outputs.identity }}
+          NOTARY_KEY: ${{ secrets.NOTARY_KEY }}
+          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+        run: |
+          codesign --sign "$SIGN_IDENTITY" --timestamp "dist/Spindle-$VERSION.dmg"
+          Scripts/notarize.sh "dist/Spindle-$VERSION.dmg"
+
+      # Before publishing anything, so a build number that Sparkle would never offer stops here.
+      - name: Add the release to the appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          if git fetch origin gh-pages; then
+            git worktree add --detach dist/pages FETCH_HEAD
+          else
+            git worktree add --orphan -b gh-pages dist/pages
+          fi
+          swift package resolve # for Sparkle's sign_update
+          signature="$(printf '%s' "$SPARKLE_PRIVATE_KEY" |
+            .build/artifacts/sparkle/Sparkle/bin/sign_update --ed-key-file - "dist/Spindle-$VERSION.zip")"
+          gh release view "$TAG" --json body --jq .body > dist/notes.md
+          Scripts/appcast.py --appcast dist/pages/appcast.xml --app dist/release/Spindle.app \
+            --url "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/Spindle-$VERSION.zip" \
+            --signature "$signature" --notes dist/notes.md --channel "$CHANNEL"
+
+      - name: Upload and publish the release
+        run: |
+          gh release upload "$TAG" --clobber \
+            "dist/Spindle-$VERSION.zip" "dist/Spindle-$VERSION.dmg" "dist/Spindle-$VERSION.dSYM.zip"
+          if [[ -n "$CHANNEL" ]]; then
+            gh release edit "$TAG" --draft=false --prerelease
+          else
+            gh release edit "$TAG" --draft=false --latest
+          fi
+
+      # After the release is public, so the appcast never points at a download that isn't there.
+      - name: Publish the appcast
+        working-directory: dist/pages
+        run: |
+          touch .nojekyll
+          git add appcast.xml .nojekyll
+          git -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit --quiet --message "Spindle $VERSION"
+          git push origin HEAD:refs/heads/gh-pages
+
+      - name: Wait for the appcast to go live
+        run: |
+          feed="$(plutil -extract SUFeedURL raw Support/Info.plist)"
+          build="$(plutil -extract CFBundleVersion raw dist/release/Spindle.app/Contents/Info.plist)"
+          for _ in $(seq 60); do
+            if curl -fsSL "$feed" | grep -q "<sparkle:version>$build</sparkle:version>"; then
+              echo "$feed offers build $build."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::warning::$feed doesn't offer build $build after 10 minutes. Is GitHub Pages publishing the gh-pages branch?"
+
+      - name: Remove the signing keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/spindle-signing.keychain-db" || true
