@@ -37,6 +37,7 @@ jobs:
     environment: release
     permissions:
       contents: write # upload to and publish the release, push the appcast
+      pages: write # ask for a Pages build after pushing the appcast
     # One appcast: publishing a beta and a release at once would lose one of the entries.
     concurrency:
       group: publish-appcast
@@ -52,14 +53,11 @@ jobs:
         with:
           ref: ${{ inputs.sha }}
           fetch-depth: 0 # the build number is the commit count
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            .build/artifacts
-            .build/checkouts
-            .build/repositories
-          key: spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Package.resolved') }}
-          restore-keys: spm-${{ runner.os }}-${{ runner.arch }}-
+      # No dependency cache: the update signing key is given to Sparkle's sign_update, so that
+      # binary must come fresh from the checksummed download, not from a cache other workflows
+      # can write.
+      - name: Resolve dependencies
+        run: swift package resolve
 
       - name: Check the inputs
         run: |
@@ -72,22 +70,51 @@ jobs:
             exit 1
           fi
 
+      - name: Check the update signing key
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: Scripts/check-sparkle-key.sh
+
+      # A re-run after the release went public can't rebuild it: the published files are what
+      # people download, and immutable releases can't be changed. It reuses them instead.
+      - name: Check whether the release is already public
+        id: release
+        run: |
+          if [[ "$(gh release view "$TAG" --json isDraft --jq .isDraft)" == false ]]; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::$TAG is already public; reusing its files."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download the published files
+        if: steps.release.outputs.published == 'true'
+        run: |
+          mkdir -p dist/release
+          gh release download "$TAG" --dir dist --clobber \
+            --pattern "Spindle-$VERSION.zip" --pattern "Spindle-$VERSION.dmg"
+          ditto -x -k "dist/Spindle-$VERSION.zip" dist/release
+
       - name: Import the signing certificate
         id: certificate
+        if: steps.release.outputs.published != 'true'
         env:
           CERTIFICATE_P12: ${{ secrets.RELEASE_CERTIFICATE_P12 }}
           CERTIFICATE_PASSWORD: ${{ secrets.RELEASE_CERTIFICATE_PASSWORD }}
         run: Scripts/import-certificate.sh > /dev/null
 
       - name: Build the universal app
+        if: steps.release.outputs.published != 'true'
         env:
           SIGN_IDENTITY: ${{ steps.certificate.outputs.identity }}
+          # The identity is a SHA-1, so bundle.sh can't tell a Developer ID from its name.
+          HARDENED_RUNTIME: ${{ steps.certificate.outputs.developer-id == 'true' && '1' || '' }}
         run: |
           make release
           make verify-bundle APP=dist/release/Spindle.app
 
       - name: Notarize the app
-        if: steps.certificate.outputs.developer-id == 'true'
+        if: steps.release.outputs.published != 'true' && steps.certificate.outputs.developer-id == 'true'
         env:
           NOTARY_KEY: ${{ secrets.NOTARY_KEY }}
           NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
@@ -95,10 +122,11 @@ jobs:
         run: Scripts/notarize.sh dist/release/Spindle.app
 
       - name: Package
+        if: steps.release.outputs.published != 'true'
         run: make package
 
       - name: Sign and notarize the disk image
-        if: steps.certificate.outputs.developer-id == 'true'
+        if: steps.release.outputs.published != 'true' && steps.certificate.outputs.developer-id == 'true'
         env:
           SIGN_IDENTITY: ${{ steps.certificate.outputs.identity }}
           NOTARY_KEY: ${{ secrets.NOTARY_KEY }}
@@ -112,13 +140,20 @@ jobs:
       - name: Add the release to the appcast
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          PUBLISHED: ${{ steps.release.outputs.published }}
         run: |
           if git fetch origin gh-pages; then
             git worktree add --detach dist/pages FETCH_HEAD
           else
             git worktree add --orphan -b gh-pages dist/pages
           fi
-          swift package resolve # for Sparkle's sign_update
+          build="$(plutil -extract CFBundleVersion raw dist/release/Spindle.app/Contents/Info.plist)"
+          # Only a re-run of a release that is already public may find its entry there already.
+          if [[ "$PUBLISHED" == true && -f dist/pages/appcast.xml ]] &&
+            grep -q "<sparkle:version>$build</sparkle:version>" dist/pages/appcast.xml; then
+            echo "::notice::The appcast already offers build $build."
+            exit 0
+          fi
           signature="$(printf '%s' "$SPARKLE_PRIVATE_KEY" |
             .build/artifacts/sparkle/Sparkle/bin/sign_update --ed-key-file - "dist/Spindle-$VERSION.zip")"
           gh release view "$TAG" --json body --jq .body > dist/notes.md
@@ -127,6 +162,7 @@ jobs:
             --signature "$signature" --notes dist/notes.md --channel "$CHANNEL"
 
       - name: Upload and publish the release
+        if: steps.release.outputs.published != 'true'
         run: |
           gh release upload "$TAG" --clobber \
             "dist/Spindle-$VERSION.zip" "dist/Spindle-$VERSION.dmg" "dist/Spindle-$VERSION.dSYM.zip"
@@ -142,13 +178,23 @@ jobs:
         run: |
           touch .nojekyll
           git add appcast.xml .nojekyll
+          if git diff --cached --quiet; then
+            echo "Nothing new to publish."
+            exit 0
+          fi
           git -c user.name="github-actions[bot]" \
             -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit --quiet --message "Spindle $VERSION"
           git push origin HEAD:refs/heads/gh-pages
 
+      # Pushes made with GITHUB_TOKEN may not start a Pages build on their own, so ask for one.
       - name: Wait for the appcast to go live
         run: |
+          if ! gh api "repos/$GITHUB_REPOSITORY/pages" > /dev/null 2>&1; then
+            echo "::warning::GitHub Pages isn't set up, so nobody is offered this update yet. Settings → Pages: deploy from the gh-pages branch (docs/releasing.md)."
+            exit 0
+          fi
+          gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds" > /dev/null
           feed="$(plutil -extract SUFeedURL raw Support/Info.plist)"
           build="$(plutil -extract CFBundleVersion raw dist/release/Spindle.app/Contents/Info.plist)"
           for _ in $(seq 60); do
@@ -158,7 +204,8 @@ jobs:
             fi
             sleep 10
           done
-          echo "::warning::$feed doesn't offer build $build after 10 minutes. Is GitHub Pages publishing the gh-pages branch?"
+          echo "::error::$feed doesn't offer build $build after 10 minutes, so nobody is offered this update."
+          exit 1
 
       # Releases only, once the tap exists: the repository variable HOMEBREW_TAP names it (for
       # example homebrew-tap), and the release GitHub App is installed on it.

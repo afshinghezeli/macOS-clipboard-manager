@@ -25,6 +25,7 @@ security set-keychain-settings "$keychain"  # no automatic locking during a long
 security unlock-keychain -p "$keychain_password" "$keychain"
 
 p12="$directory/certificate.p12"
+trap 'rm -f "$p12"' EXIT
 (umask 077 && printf '%s' "$CERTIFICATE_P12" | base64 --decode > "$p12")
 security import "$p12" -k "$keychain" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign > /dev/null
 rm -f "$p12"

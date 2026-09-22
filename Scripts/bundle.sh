@@ -30,7 +30,11 @@ product="Spindle"
 bundle_id="com.afshinghezeli.Spindle"
 [[ "$configuration" == debug ]] && bundle_id="$bundle_id.dev"
 version="${VERSION:-$(tr -d '[:space:]' < version.txt)}"
-build_number="$(git rev-list --count HEAD 2>/dev/null || echo 0)"
+if ! build_number="$(git rev-list --count HEAD 2> /dev/null)"; then
+    # Sparkle compares build numbers, so a release must never get a made-up one.
+    [[ "$configuration" == release ]] && { echo "error: can't count commits for the build number" >&2; exit 1; }
+    build_number=0
+fi
 arches="${ARCHES:-$(uname -m)}"
 app="$root/dist/$configuration/$product.app"
 contents="$app/Contents"

@@ -26,7 +26,13 @@ trap 'rm -rf "$staging"' EXIT
 ditto "$app" "$staging/Spindle.app"
 ln -s /Applications "$staging/Applications"
 # ULFO (LZFSE) needs macOS 10.11 or later; Spindle needs 15.
-hdiutil create -quiet -volname Spindle -srcfolder "$staging" -fs HFS+ -format ULFO "$dist/$name.dmg"
+# hdiutil sometimes fails with "Resource busy" on CI machines; a retry usually succeeds.
+for attempt in 1 2 3; do
+    hdiutil create -quiet -ov -volname Spindle -srcfolder "$staging" -fs HFS+ -format ULFO "$dist/$name.dmg" && break
+    [[ "$attempt" == 3 ]] && exit 1
+    echo "hdiutil failed; trying again" >&2
+    sleep 5
+done
 
 if [[ -d "$dist/release/Spindle.app.dSYM" ]]; then
     ditto -c -k --keepParent "$dist/release/Spindle.app.dSYM" "$dist/$name.dSYM.zip"

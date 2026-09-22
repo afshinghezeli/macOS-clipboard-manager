@@ -51,15 +51,26 @@ jobs:
             git log --format='* %s' ${previous:+"$previous..HEAD"} |
               grep -E '^\* (feat|fix|perf)(\([a-z0-9-]+\))?!?: ' || echo "* Fixes and internal changes"
           } > notes.md
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          # A draft left by a failed run is reused; a published beta is never replaced.
+          if state="$(gh release view "$tag" --json isDraft --jq .isDraft 2> /dev/null)"; then
+            if [[ "$state" == true ]]; then
+              echo "::notice::Reusing the draft $tag."
+              gh release edit "$tag" --target "$GITHUB_SHA" --notes-file notes.md
+              exit 0
+            fi
+            echo "::error::$tag is already published. Pick the next beta number."
+            exit 1
+          fi
           gh release create "$tag" --draft --prerelease --target "$GITHUB_SHA" --title "$VERSION" \
             --notes-file notes.md
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
   publish:
     name: Publish
     needs: draft
     permissions:
       contents: write
+      pages: write
     uses: ./.github/workflows/release.yml
     with:
       tag: ${{ needs.draft.outputs.tag }}
