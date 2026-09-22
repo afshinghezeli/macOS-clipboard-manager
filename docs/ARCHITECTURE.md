@@ -107,6 +107,8 @@ Tables ([ADR 0003](adr/0003-store-history-in-sqlite-with-grdb.md)):
 
 Re-copying or pasting an item gives it a new `seq`, which moves it to the top without duplicating anything. Text counts as the same item when its plain text matches, even if it comes from another app with different formatting; the newest formatting replaces the old. Images match by their bytes and files by their paths. Pinned items are never pruned.
 
+The search index uses FTS5's secure delete, so deleting or pruning an item erases its text from the index right away. Re-copying skips it: the same text goes straight back in under the new `seq`, and erasing it first cost 3 ms per re-copy at 100,000 items. SQLite doesn't checkpoint the WAL during a write; `AppDatabase` does it a second after writes stop, so no single copy waits for it.
+
 ## Search
 
 Queries are folded (case, diacritics, width) exactly as the stored text was, then split into words. Every word must occur somewhere in the item, in any order.

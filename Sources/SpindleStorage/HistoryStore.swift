@@ -21,7 +21,7 @@ public struct HistoryStore: Sendable {
     /// and its frecency rises. Pasting writes the pasteboard, and capture ignores Spindle's own
     /// writes, so this is the only place that use is counted.
     public func markUsed(_ itemID: Int64, at date: Date = .now) async throws {
-        try await database.writer.write { db in
+        try await database.write { db in
             guard
                 let key = try Double.fetchOne(
                     db, sql: "SELECT frecency_key FROM item WHERE id = ?", arguments: [itemID])
@@ -39,7 +39,7 @@ public struct HistoryStore: Sendable {
 
     /// Pins the item at the end of the pinned list, or unpins it. Pinned items are never pruned.
     public func setPinned(_ itemID: Int64, _ pinned: Bool) async throws {
-        try await database.writer.write { db in
+        try await database.write { db in
             if pinned {
                 try db.execute(
                     sql: """
@@ -55,7 +55,7 @@ public struct HistoryStore: Sendable {
 
     /// Moves a pinned item up (negative `offset`) or down among the pinned items.
     public func movePin(_ itemID: Int64, by offset: Int) async throws {
-        try await database.writer.write { db in
+        try await database.write { db in
             var order = try Int64.fetchAll(
                 db, sql: "SELECT id FROM item WHERE pinned_rank IS NOT NULL ORDER BY pinned_rank")
             guard let index = order.firstIndex(of: itemID) else { return }
@@ -71,7 +71,7 @@ public struct HistoryStore: Sendable {
     /// Removes the item from the history. Its text is overwritten in the search index; payload
     /// files are removed by the next sweep once nothing refers to them.
     public func delete(_ itemID: Int64) async throws {
-        try await database.writer.write { db in
+        try await database.write { db in
             try db.execute(sql: "DELETE FROM item WHERE id = ?", arguments: [itemID])
         }
     }

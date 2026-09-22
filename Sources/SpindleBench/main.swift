@@ -93,6 +93,9 @@ for count in [10_000, 100_000] {
     let buildStart = ContinuousClock.now
     try await makeHistory(texts, in: database)
     let buildTime = ContinuousClock.now - buildStart
+    // Building wrote the history back to back, so the WAL is still waiting for its checkpoint.
+    // Let it run first, as it does between copies in real use, instead of inside the measurements.
+    try await Task.sleep(for: .seconds(3))
     print(
         "\n\(count) items (built in \(buildTime.formatted(.units(allowed: [.seconds], fractionalPart: .show(length: 1)))))"
     )

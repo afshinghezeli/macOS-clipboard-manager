@@ -57,7 +57,7 @@ public struct Pruner: Sendable {
         }
 
         result.removedFiles = try await sweepFiles(olderThan: date.addingTimeInterval(-fileGracePeriod))
-        try await database.writer.writeWithoutTransaction { db in
+        try await database.writeWithoutTransaction { db in
             try db.execute(sql: "PRAGMA incremental_vacuum(1000)")
         }
         return result
@@ -78,7 +78,7 @@ public struct Pruner: Sendable {
     private func deleteInBatches(where condition: String) async throws -> Int {
         var total = 0
         while true {
-            let deleted = try await database.writer.write { db in
+            let deleted = try await database.write { db in
                 try db.execute(
                     sql: """
                         DELETE FROM item WHERE id IN (
@@ -96,7 +96,7 @@ public struct Pruner: Sendable {
     private func trimToSize(_ maxTotalBytes: Int) async throws -> Int {
         var total = 0
         while true {
-            let deleted = try await database.writer.write { db -> Int in
+            let deleted = try await database.write { db -> Int in
                 let size = try Int.fetchOne(db, sql: "SELECT coalesce(sum(byte_size), 0) FROM item") ?? 0
                 guard size > maxTotalBytes else { return 0 }
                 var excess = size - maxTotalBytes

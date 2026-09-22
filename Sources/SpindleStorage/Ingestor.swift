@@ -66,7 +66,7 @@ public actor Ingestor {
         let date = copy.capturedAt
         let metadata = try String(decoding: JSONEncoder.sorted.encode(prepared.metadata), as: UTF8.self)
         let record = SaveRequest(prepared: prepared, blobHashes: blobHashes, metadata: metadata, copy: copy, date: date)
-        let outcome = try await database.writer.write { db in
+        let outcome = try await database.write { db in
             try Self.save(record, in: db)
         }
 
@@ -112,6 +112,10 @@ public actor Ingestor {
         {
             itemID = existing["id"]
             let frecency = Frecency.key(existing["frecency_key"], usedAgainAt: date)
+            // The text goes straight back into the search index under the new seq, so there is
+            // nothing to erase. FTS5's secure delete would still search the whole index for the
+            // old entry: at 100,000 items that made a re-copy take 3 ms, 13 ms at p99 (M2.6).
+            try db.execute(sql: "INSERT INTO item_fts(item_fts, rank) VALUES ('secure-delete', 0)")
             try db.execute(
                 sql: """
                     UPDATE item SET seq = ?, kind = ?, preview = ?, search_text = ?, byte_size = ?,
@@ -123,6 +127,7 @@ public actor Ingestor {
                     seq, prepared.kind.rawValue, prepared.preview, prepared.searchText, prepared.byteCount,
                     sourceID, milliseconds, frecency, metadata, itemID,
                 ])
+            try db.execute(sql: "INSERT INTO item_fts(item_fts, rank) VALUES ('secure-delete', 1)")
             // The newest copy's formatting replaces the old. Blob files the old rows pointed to
             // are left for the sweep, which only removes files no row references.
             try db.execute(sql: "DELETE FROM representation WHERE item_id = ?", arguments: [itemID])

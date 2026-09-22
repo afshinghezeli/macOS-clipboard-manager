@@ -108,6 +108,22 @@ struct IngestorTests {
     }
 
     @Test
+    func copyingAgainKeepsTheSearchIndexWholeAndSecureDeleteOn() async throws {
+        _ = try await ingestor.ingest(text("quarterly report"))
+        _ = try await ingestor.ingest(text("something else"))
+        _ = try await ingestor.ingest(text("quarterly report"))
+        try await database.writer.write { db in
+            // Throws if the index and the item table disagree.
+            try db.execute(sql: "INSERT INTO item_fts(item_fts, rank) VALUES ('integrity-check', 1)")
+            let matches = try Int64.fetchAll(db, sql: "SELECT rowid FROM item_fts WHERE item_fts MATCH '\"quarterly\"'")
+            #expect(matches == [3])
+            // Deleting an item must still erase its text from the index.
+            let secureDelete = try Int.fetchOne(db, sql: "SELECT v FROM item_fts_config WHERE k = 'secure-delete'")
+            #expect(secureDelete == 1)
+        }
+    }
+
+    @Test
     func bumpingRaisesFrecency() async throws {
         guard case .inserted(let id) = try await ingestor.ingest(text("often")) else {
             Issue.record("unexpected ingest outcome")

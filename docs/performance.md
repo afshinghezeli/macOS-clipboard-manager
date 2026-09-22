@@ -44,8 +44,10 @@ Numbers from the app itself, replacing prototype figures as each part lands. Eac
 | 2026-09-22 | release, arm64, M2.4 | M4, macOS 15.3 | Slowest query ("a", scans recent items), p99 | 3.9 ms / 4.3 ms | ≤ 8 ms / ≤ 25 ms |
 | 2026-09-22 | release, arm64, M2.4 | M4, macOS 15.3 | A page of 100 items, top or mid-history, p99 | ≤ 1.1 ms | |
 | 2026-09-22 | release, arm64, M2.4 | M4, macOS 15.3 | Ingest one text copy, p50 / p99 | 0.12 ms / 4.5 ms at 100,000 | p99 ≤ 2 ms: **missed** |
+| 2026-09-22 | release, arm64, M2.6 | M4, macOS 15.3 | Ingest one text copy, p50 / p99, 3 runs | 0.13 ms / 0.44–0.73 ms at 100,000 | p99 ≤ 2 ms |
+| 2026-09-22 | release, arm64, M2.6 | M4, macOS 15.3 | Copy an old item again, p50 / p99, 3 runs | 0.21 ms / 1.2 ms at 10,000; 0.5 ms / 1.5–2.2 ms at 100,000 | p99 ≤ 2 ms: borderline |
 
-The ingest p99 misses its budget: the median is 0.12 ms, but about one copy in a hundred takes several milliseconds. It happens off the main thread, so nobody waits for it; the likely cause is SQLite merging search-index segments or checkpointing the WAL. Roadmap task M2.6 tracks it. The memory figure will be repeated with 100,000 items in the running app.
+M2.4 missed the ingest budget: about one copy in 50 took 4 ms or more. Sampling showed two causes. SQLite checkpointed the WAL inside whichever commit crossed its threshold, and copying an old item again ran FTS5's secure delete, which searches the whole index (3.1 ms median, 14 ms p99 at 100,000). M2.6 moved checkpoints to a second after writes stop and skips secure delete when the same text goes straight back into the index. The benchmark waits for the checkpoint after building each history, as happens between copies in real use. The memory figure will be repeated with 100,000 items in the running app.
 
 ## Prototype measurements
 
