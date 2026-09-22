@@ -71,7 +71,7 @@ Spindle records the clipboard reliably and safely, with no UI beyond the menu ba
   - [x] M2.1a Ranking: match quality (exact, prefix, word start, inside a word, beyond the indexed head), blended with recency, frecency and pin state; weights in one tested struct.
   - [x] M2.1b The engine: each word of the query must match somewhere; trigram FTS for words of three or more characters, a bounded scan of recent items otherwise; pinned and frecent items always considered; results ranked with M2.1a, at most 100.
 - [x] M2.2 Frecency key and bumping on copy and paste.
-- [ ] M2.3 Fuzzy fallback over a small in-memory pool when exact matches are scarce.
+- [x] M2.3 Fuzzy fallback over a small in-memory pool when exact matches are scarce.
 - [x] M2.4 Benchmarks with deterministic 10k and 100k histories, `make bench`, and measured numbers in performance.md.
 - [x] M2.5 Queries that mix long and short words ("git st") check the short words only among the 256 newest index matches of the long ones, so an older item containing all of them can be missed. Widen the window when too few candidates survive.
 - [x] M2.6 Ingest p99 is 4.5 ms at 100,000 items against a 2 ms budget, from rare spikes (median 0.12 ms). Find the cause (FTS5 segment merges or WAL checkpoints are the suspects) and fix it or revise the budget with the owner.

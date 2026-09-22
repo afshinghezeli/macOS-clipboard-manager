@@ -16,6 +16,9 @@ public struct SearchResult: Hashable, Sendable {
 /// query made only of shorter words scans the newest items instead. Pinned and often-used items are
 /// always considered, however old. At most a few hundred candidates are ranked in Swift; the whole
 /// history is never loaded.
+///
+/// When that finds fewer than `typoThreshold` items, the newest items and the pinned and often-used
+/// ones are checked again allowing typos (`TypoMatch`), and those matches follow the exact ones.
 public struct SearchEngine: Sendable {
     public static let resultLimit = 100
     /// Newest matches taken from the index or the scan.
@@ -28,6 +31,10 @@ public struct SearchEngine: Sendable {
     /// items that also have the short ones. Walking 20,000 took 35 ms (p99) at 100,000 items when
     /// none had them; the keystroke budget there is 25 ms.
     static let mixedQueryScanBudget = 8_000
+    /// Fewer exact results than this adds matches with typos.
+    static let typoThreshold = 5
+    /// Newest items checked for typos, besides pinned and often-used ones.
+    static let typoPoolSize = 2_000
 
     private let database: AppDatabase
     private let ranking: SearchRanking
@@ -67,7 +74,66 @@ public struct SearchEngine: Sendable {
             }
         }
         results.sort { $0.score != $1.score ? $0.score > $1.score : $0.item.seq > $1.item.seq }
-        return Array(results.prefix(limit))
+        results = Array(results.prefix(limit))
+
+        if results.count < Self.typoThreshold, results.count < limit, let typos = TypoMatch(query: words) {
+            let found = Set(results.map(\.item.seq))
+            results += try await typoResults(typos, excluding: found, limit: limit - results.count)
+        }
+        return results
+    }
+
+    /// Items that match with typos, fewest edits first, then newest. Their scores are below every
+    /// exact match's: minus the number of edits.
+    private func typoResults(
+        _ typos: TypoMatch, excluding found: Set<Int64>, limit: Int
+    ) async throws
+        -> [SearchResult]
+    {
+        // UNION ALL: the pools overlap, but removing duplicates here would compare whole texts.
+        // Words too short to correct must appear as typed, so SQLite can already skip the rest.
+        let literal = typos.literal
+        let containsLiteral = (["1"] + literal.map { _ in "instr(search_text, ?) > 0" }).joined(separator: " AND ")
+        let pool = try await database.writer.read { db in
+            var pool: [(seq: Int64, text: String)] = []
+            let rows = try Row.fetchCursor(
+                db,
+                sql: """
+                    SELECT seq, search_text FROM (
+                        SELECT seq, search_text FROM (SELECT seq, search_text FROM item ORDER BY seq DESC LIMIT ?)
+                        UNION ALL
+                        SELECT seq, search_text FROM item WHERE pinned_rank IS NOT NULL
+                        UNION ALL
+                        SELECT seq, search_text FROM (
+                            SELECT seq, search_text FROM item ORDER BY frecency_key DESC LIMIT ?)
+                    ) WHERE \(containsLiteral)
+                    """,
+                arguments: [Self.typoPoolSize, Self.frecentPoolSize] + StatementArguments(literal))
+            while let row = try rows.next() {
+                pool.append((row[0], row[1]))
+            }
+            return pool
+        }
+        try Task.checkCancellation()
+
+        var matches: [(seq: Int64, edits: Int)] = []
+        var checked = found
+        for (index, entry) in pool.enumerated() where checked.insert(entry.seq).inserted {
+            if index % 256 == 0 { try Task.checkCancellation() }
+            if let edits = typos.edits(in: entry.text) { matches.append((entry.seq, edits)) }
+        }
+        matches.sort { $0.edits != $1.edits ? $0.edits < $1.edits : $0.seq > $1.seq }
+        matches = Array(matches.prefix(limit))
+        guard !matches.isEmpty else { return [] }
+
+        let edits = Dictionary(uniqueKeysWithValues: matches.map { ($0.seq, $0.edits) })
+        let list = edits.keys.map(String.init).joined(separator: ",")  // integers only
+        let summaries = try await database.writer.read { db in
+            try Row.fetchAll(db, sql: "SELECT \(ItemSummary.columns) FROM item WHERE seq IN (\(list))")
+                .map(ItemSummary.init(row:))
+        }
+        return summaries.map { SearchResult(item: $0, score: -Double(edits[$0.seq] ?? 0)) }
+            .sorted { $0.score != $1.score ? $0.score > $1.score : $0.item.seq > $1.item.seq }
     }
 
     private struct Candidate: Sendable {

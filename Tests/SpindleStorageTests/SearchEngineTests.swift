@@ -71,6 +71,32 @@ struct SearchEngineTests {
     }
 
     @Test
+    func findsItemsDespiteATypo() async throws {
+        try await add("the clipboard remembers")
+        try await add("unrelated")
+        #expect(try await previews("clipbaord") == ["the clipboard remembers"])
+        #expect(try await previews("the clipbord") == ["the clipboard remembers"])
+    }
+
+    @Test
+    func exactMatchesComeBeforeTypos() async throws {
+        try await add("staus update")
+        try await add("status report")
+        #expect(try await previews("status") == ["status report", "staus update"])
+    }
+
+    @Test
+    func enoughExactMatchesLeaveTyposOut() async throws {
+        try await add("staus update")
+        for index in 0..<SearchEngine.typoThreshold {
+            try await add("status report \(index)")
+        }
+        let found = try await previews("status")
+        #expect(found.count == SearchEngine.typoThreshold)
+        #expect(!found.contains("staus update"))
+    }
+
+    @Test
     func wordsMatchInAnyOrder() async throws {
         try await add("git status --short")
         #expect(try await previews("status git") == ["git status --short"])

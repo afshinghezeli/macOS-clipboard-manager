@@ -85,6 +85,8 @@ let queries = [
     "inv", "invoice", "meeting notes", "東京", "git reb", "a", "zzqx", "https", "#123", "brûlée",
     // A long and a short word; the second never matches, so the whole scan budget is walked.
     "git st", "meeting zq",
+    // Typos: too few exact matches, so the newest items are checked again allowing typos.
+    "clipbaord", "quartrely reprot",
 ]
 
 for count in [10_000, 100_000] {

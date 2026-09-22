@@ -117,7 +117,7 @@ Queries are folded (case, diacritics, width) exactly as the stored text was, the
 - **Long and short words together.** The long words' index matches are walked newest-first, and shorter words are checked on the way (`instr`), up to 256 candidates or 8,000 matches walked.
 - **Only shorter words.** A bounded scan of the newest 20,000 items is used instead.
 - **Ranking.** Pinned and frequently used items join the candidate set. Everything is re-ranked in Swift by match quality, recency, frecency and pin state.
-- **Typos.** Not handled yet. A fuzzy fallback over a small in-memory pool, for when exact matches are scarce, is roadmap task M2.3.
+- **Typos.** When fewer than five items match exactly, the newest 2,000 items plus the pinned and often-used ones are checked again allowing typos (`TypoMatch`): each word of four or more characters may be one edit from a word in the item or its start, two edits from eight characters on, with swapped neighbors counting as one. These matches follow the exact ones, fewest edits first.
 
 Budgets and how they are measured: [performance.md](performance.md).
 
