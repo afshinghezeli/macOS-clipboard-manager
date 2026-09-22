@@ -40,7 +40,6 @@ Numbers from the app itself, replacing prototype figures as each part lands. Eac
 |---|---|---|---|---|---|
 | 2026-09-22 | release, arm64, M1.11 | M4, macOS 15.3 | CPU while idle, panel hidden (`top`, 30 × 1 s) | 0.01 % | ≤ 0.1 % |
 | 2026-09-22 | release, arm64, M1.11 | M4, macOS 15.3 | Memory while idle, empty history (`footprint`) | 11 MB | ≤ 40 MB |
-
 | 2026-09-22 | release, arm64, M2.4 | M4, macOS 15.3 | Search, 10 query types, p99 (`make bench`) | 3.4 ms at 10,000 items, 3.7 ms at 100,000 | ≤ 8 ms / ≤ 25 ms |
 | 2026-09-22 | release, arm64, M2.4 | M4, macOS 15.3 | Slowest query ("a", scans recent items), p99 | 3.9 ms / 4.3 ms | ≤ 8 ms / ≤ 25 ms |
 | 2026-09-22 | release, arm64, M2.4 | M4, macOS 15.3 | A page of 100 items, top or mid-history, p99 | ≤ 1.1 ms | |
