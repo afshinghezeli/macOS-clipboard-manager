@@ -81,7 +81,11 @@ func measure(_ runs: Int, _ body: () async throws -> Void) async rethrows -> Sta
     return Stats(samples: samples)
 }
 
-let queries = ["inv", "invoice", "meeting notes", "東京", "git reb", "a", "zzqx", "https", "#123", "brûlée"]
+let queries = [
+    "inv", "invoice", "meeting notes", "東京", "git reb", "a", "zzqx", "https", "#123", "brûlée",
+    // A long and a short word; the second never matches, so the whole scan budget is walked.
+    "git st", "meeting zq",
+]
 
 for count in [10_000, 100_000] {
     let directory = FileManager.default.temporaryDirectory.appending(

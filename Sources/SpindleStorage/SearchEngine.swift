@@ -12,9 +12,10 @@ public struct SearchResult: Hashable, Sendable {
 ///
 /// Every word of the query must occur in the item's folded text. Words of three or more characters
 /// go through the trigram index, whose rowid is the recency key, so the newest matches come back
-/// without sorting. A query made only of shorter words scans the newest items instead. Pinned and
-/// often-used items are always considered, however old. At most a few hundred candidates are
-/// ranked in Swift; the whole history is never loaded.
+/// without sorting; shorter words in the same query are checked while walking those matches. A
+/// query made only of shorter words scans the newest items instead. Pinned and often-used items are
+/// always considered, however old. At most a few hundred candidates are ranked in Swift; the whole
+/// history is never loaded.
 public struct SearchEngine: Sendable {
     public static let resultLimit = 100
     /// Newest matches taken from the index or the scan.
@@ -23,6 +24,10 @@ public struct SearchEngine: Sendable {
     static let frecentPoolSize = 512
     /// How far back, in recency steps, a query of only short words looks.
     static let shortQueryScanBudget = 20_000
+    /// How many index matches of its long words a query with short words too walks, looking for
+    /// items that also have the short ones. Walking 20,000 took 35 ms (p99) at 100,000 items when
+    /// none had them; the keystroke budget there is 25 ms.
+    static let mixedQueryScanBudget = 8_000
 
     private let database: AppDatabase
     private let ranking: SearchRanking
@@ -78,13 +83,32 @@ public struct SearchEngine: Sendable {
 
         var seqs: [Int64]
         if !indexable.isEmpty {
-            // Each word as a quoted phrase, so nothing the user types is read as FTS syntax. Short
-            // words in the same query are checked during ranking.
+            // Each word as a quoted phrase, so nothing the user types is read as FTS syntax.
             let match = indexable.map { "\"" + $0.replacingOccurrences(of: "\"", with: "\"\"") + "\"" }
                 .joined(separator: " AND ")
-            seqs = try Int64.fetchAll(
-                db, sql: "SELECT rowid FROM item_fts WHERE item_fts MATCH ? ORDER BY rowid DESC LIMIT ?",
-                arguments: [match, candidateLimit])
+            let short = words.filter { $0.unicodeScalars.count < 3 }
+            if short.isEmpty {
+                seqs = try Int64.fetchAll(
+                    db, sql: "SELECT rowid FROM item_fts WHERE item_fts MATCH ? ORDER BY rowid DESC LIMIT ?",
+                    arguments: [match, candidateLimit])
+            } else {
+                // Taking the newest index matches and checking the short words afterwards misses
+                // older items when the newest matches lack them ("git st"). So check them while
+                // walking the matches newest first, and stop at enough candidates or at the budget.
+                // CROSS JOIN keeps the walk as the outer loop, so the rows come out newest first
+                // and the LIMIT stops it early, without sorting.
+                let containsShort = short.map { _ in "instr(item.search_text, ?) > 0" }.joined(separator: " AND ")
+                seqs = try Int64.fetchAll(
+                    db,
+                    sql: """
+                        SELECT walk.seq FROM (
+                            SELECT rowid AS seq FROM item_fts WHERE item_fts MATCH ? ORDER BY rowid DESC LIMIT ?
+                        ) AS walk CROSS JOIN item ON item.seq = walk.seq
+                        WHERE \(containsShort)
+                        LIMIT ?
+                        """,
+                    arguments: [match, mixedQueryScanBudget] + StatementArguments(short) + [candidateLimit])
+            }
         } else {
             seqs = try Int64.fetchAll(
                 db,

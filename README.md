@@ -69,7 +69,7 @@ The shortcuts follow Raycast's where it has one. Right-click the menu bar icon t
 ## Limits
 
 - Files are stored as references. If you move or delete the original, pasting the item gives the old location.
-- Search finds the text you type anywhere in an item ("rebase" finds "git rebase -i HEAD~3"). It doesn't forgive typos yet, and a query that mixes long and short words, like "git st", can miss older items.
+- Search finds the text you type anywhere in an item ("rebase" finds "git rebase -i HEAD~3"). It doesn't forgive typos yet. A query that mixes long and short words, like "git st", looks through the newest 8,000 items with the long words, so it can miss older ones.
 - There is no sync between Macs, and there won't be: the history stays on the Mac it was copied on.
 
 ## Building from source

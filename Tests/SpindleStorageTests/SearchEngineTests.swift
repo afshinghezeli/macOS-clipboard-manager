@@ -59,6 +59,18 @@ struct SearchEngineTests {
     }
 
     @Test
+    func mixedQueriesFindOlderItemsBehindManyPartialMatches() async throws {
+        try await add("git status --short")
+        // Newer "status" items than the index window and the pool of often-used items together
+        // hold, none of them with "--" or "git".
+        for index in 0..<(SearchEngine.candidateLimit + SearchEngine.frecentPoolSize + 50) {
+            try await add("deploy status \(index)")
+        }
+        #expect(try await previews("status --") == ["git status --short"])
+        #expect(try await previews("git st") == ["git status --short"])
+    }
+
+    @Test
     func wordsMatchInAnyOrder() async throws {
         try await add("git status --short")
         #expect(try await previews("status git") == ["git status --short"])
