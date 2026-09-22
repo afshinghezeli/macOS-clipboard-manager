@@ -36,7 +36,7 @@ struct PanelSnapshotTests {
         _ = try await add([(.fileURL, URL(filePath: "/Users/me/Documents/Budget 2026.numbers").dataRepresentation)])
         _ = try await add([text("#FF9500")])
         _ = try await add([(.png, Self.sampleImage())])
-        _ = try await add([text("https://github.com/afshinghezeli/macOS-clipboard-manager")])
+        _ = try await add([text("https://github.com/afshinghezeli/spindle")])
         _ = try await add([text("The quick brown fox jumps over the lazy dog"), (.rtf, Data("{\\rtf1 x}".utf8))])
         if let pinned { try await history.setPinned(pinned, true) }
 

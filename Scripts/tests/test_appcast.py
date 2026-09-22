@@ -10,12 +10,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import appcast  # noqa: E402
 
-NOTES = """## [0.2.0](https://github.com/afshinghezeli/macOS-clipboard-manager/compare/v0.1.0...v0.2.0) (2026-10-01)
+NOTES = """## [0.2.0](https://github.com/afshinghezeli/spindle/compare/v0.1.0...v0.2.0) (2026-10-01)
 
 
 ### Added
 
-* **search:** match text inside <images> ([abc1234](https://github.com/afshinghezeli/macOS-clipboard-manager/commit/abc1234))
+* **search:** match text inside <images> ([abc1234](https://github.com/afshinghezeli/spindle/commit/abc1234))
 * see [the docs](https://example.org/a)
 """
 

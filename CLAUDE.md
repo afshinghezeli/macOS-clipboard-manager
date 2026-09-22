@@ -4,7 +4,7 @@ Clipboard history for macOS: a native menu bar app that remembers everything you
 
 - Owner: Afshin Ghezeli. License: GPL-3.0-only.
 - Bundle id `com.afshinghezeli.Spindle`; debug builds use `com.afshinghezeli.Spindle.dev`.
-- GitHub: `afshinghezeli/macOS-clipboard-manager` (public).
+- GitHub: `afshinghezeli/spindle` (public).
 
 ## Priorities
 

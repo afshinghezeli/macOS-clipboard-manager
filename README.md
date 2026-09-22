@@ -21,7 +21,7 @@ I use Raycast's clipboard history every day, but it comes inside a launcher I do
 
 ## Install
 
-Download `Spindle-<version>.dmg` from the [latest release](https://github.com/afshinghezeli/macOS-clipboard-manager/releases/latest) and drag Spindle to Applications.
+Download `Spindle-<version>.dmg` from the [latest release](https://github.com/afshinghezeli/spindle/releases/latest) and drag Spindle to Applications.
 
 Spindle is signed with its own certificate instead of an Apple Developer ID ([ADR 0007](docs/adr/0007-sign-releases-with-a-self-signed-certificate-for-now.md) explains why), so macOS blocks the first launch:
 
@@ -77,8 +77,8 @@ The shortcuts follow Raycast's where it has one. Right-click the menu bar icon t
 You need macOS 15 and the Command Line Tools (`xcode-select --install`); Xcode is optional.
 
 ```sh
-git clone https://github.com/afshinghezeli/macOS-clipboard-manager.git
-cd macOS-clipboard-manager
+git clone https://github.com/afshinghezeli/spindle.git
+cd spindle
 make setup && make run
 ```
 

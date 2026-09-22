@@ -4,10 +4,10 @@ cask "spindle" do
   version "@VERSION@"
   sha256 "@SHA256@"
 
-  url "https://github.com/afshinghezeli/macOS-clipboard-manager/releases/download/v#{version}/Spindle-#{version}.dmg"
+  url "https://github.com/afshinghezeli/spindle/releases/download/v#{version}/Spindle-#{version}.dmg"
   name "Spindle"
   desc "Clipboard history with instant search"
-  homepage "https://github.com/afshinghezeli/macOS-clipboard-manager"
+  homepage "https://github.com/afshinghezeli/spindle"
 
   livecheck do
     url :url

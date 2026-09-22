@@ -34,7 +34,7 @@ EMPTY_APPCAST = """<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:sparkle="{sparkle}" xmlns:dc="{dc}">
   <channel>
     <title>Spindle</title>
-    <link>https://github.com/afshinghezeli/macOS-clipboard-manager</link>
+    <link>https://github.com/afshinghezeli/spindle</link>
     <description>Updates for Spindle, a clipboard history for macOS.</description>
     <language>en</language>
   </channel>
