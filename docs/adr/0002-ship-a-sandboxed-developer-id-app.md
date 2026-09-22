@@ -44,4 +44,6 @@ This stays **proposed** until roadmap task M0.9 proves both risky parts:
 
 If either fails, ship Developer ID without the sandbox instead. There are no users yet, so no container migration is needed.
 
+**Part 2 result (2026-09-22).** It works. A sandboxed build with Sparkle 2.10.0 and no network entitlement fetched a local appcast through the Downloader service, checked the update's EdDSA signature and, after quitting, was replaced by the newer build through the Installer service.
+
 **Entitlements added since.** `com.apple.security.files.user-selected.read-only` (2026-09-22): read access only to what the user picks in an open panel, used to import Maccy's history and to add apps to the ignore list. Still no network access.
