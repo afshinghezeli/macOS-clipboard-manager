@@ -6,6 +6,19 @@
     <description>Updates for Spindle, a clipboard history for macOS.</description>
     <language>en</language>
     <item>
+      <title>Spindle 0.1.0-beta.2</title>
+      <pubDate>Wed, 23 Sep 2026 20:27:35 GMT</pubDate>
+      <sparkle:version>129</sparkle:version>
+      <sparkle:shortVersionString>0.1.0-beta.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <sparkle:channel>beta</sparkle:channel>
+      <description>&lt;p&gt;A test version of what comes after v0.1.0-beta.1. Changes so far:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Fixes and internal changes&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <enclosure url="https://github.com/afshinghezeli/spindle/releases/download/v0.1.0-beta.2/Spindle-0.1.0-beta.2.zip" length="4746669" type="application/octet-stream" sparkle:edSignature="+iEAmKeBp6kMI9/ELQbCEVy0C7URNHPpsM4rMCeYH2kL1ZnYKKbCaOy0mGYbFnGZ/0Iue5+ZUbBwLJGZ63cqAw==" />
+    </item>
+    <item>
       <title>Spindle 0.1.0-beta.1</title>
       <pubDate>Tue, 22 Sep 2026 18:20:46 GMT</pubDate>
       <sparkle:version>128</sparkle:version>
