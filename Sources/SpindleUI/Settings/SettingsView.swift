@@ -73,7 +73,9 @@ struct SettingsView: View {
                         systemImage: "hand.raised")
                 }
         }
-        .frame(width: 520)
+        // A TabView reports no height of its own to AppKit, so the window would open as a strip
+        // with empty tabs. This fits the tallest tab; shorter ones keep the window the same size.
+        .frame(width: 520, height: 480)
         .padding(20)
     }
 }

@@ -17,6 +17,8 @@ public final class SettingsWindowController {
         if window == nil {
             let hosting = NSHostingController(rootView: SettingsView(settings: settings, environment: environment))
             let window = NSWindow(contentViewController: hosting)
+            hosting.view.layoutSubtreeIfNeeded()
+            window.setContentSize(hosting.view.fittingSize)
             window.title = String(localized: "Spindle Settings", bundle: .spindleUI, comment: "Settings window title.")
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false

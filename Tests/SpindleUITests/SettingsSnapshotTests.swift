@@ -19,6 +19,11 @@ struct SettingsSnapshotTests {
         let settings = Settings(defaults: defaults)
         let size = NSSize(width: 560, height: 520)
         let updates = UpdateControls(automaticallyChecks: { true }, setAutomaticallyChecks: { _ in }, checkNow: {})
+        let environment = SettingsEnvironment(
+            pasteboardAccess: { .allowed }, clearHistory: {}, importFromMaccy: { _ in 0 }, updates: updates)
+        try Snapshot.write(
+            SettingsView(settings: settings, environment: environment), named: "settings-window",
+            size: NSSize(width: 560, height: 520))
         try Snapshot.write(
             GeneralSettings(settings: settings, updates: updates), named: "settings-general",
             size: NSSize(width: 560, height: 640))
